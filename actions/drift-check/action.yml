@@ -1,5 +1,9 @@
 name: 'Drift Check'
 description: 'Run drift to check for documentation drift'
+author: 'driftee-ai'
+branding:
+  icon: 'check-circle'
+  color: 'green'
 inputs:
   config:
     description: 'Path to the .drift.yaml config file'
