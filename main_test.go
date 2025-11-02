@@ -107,7 +107,7 @@ func TestCheckCommand_CatchesMissingParam(t *testing.T) {
 	}
 
 	// Assert on the output
-	expectedOutput := "Result: In Sync"
+	expectedOutput := "Result: Out of Sync"
 	if !strings.Contains(string(output), expectedOutput) {
 		t.Errorf("Expected output to contain '%s', but got:\n%s", expectedOutput, string(output))
 	}
