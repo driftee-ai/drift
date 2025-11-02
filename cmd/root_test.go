@@ -14,7 +14,9 @@ func TestRootCmd(t *testing.T) {
 	os.Stdout = w
 
 	rootCmd.SetArgs([]string{})
-	Execute()
+	if err := Execute(); err != nil {
+		t.Fatalf("Execute() failed: %v", err)
+	}
 
 	outC := make(chan string)
 	// copy the output in a separate goroutine so printing can't block indefinitely
