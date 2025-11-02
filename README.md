@@ -5,7 +5,14 @@ It uses large language models to assess if your documentation accurately reflect
 
 ## Installation
 
-You can install `drift` using `go install`:
+### Homebrew (macOS and Linux)
+
+```bash
+brew tap driftee-ai/drift
+brew install drift
+```
+
+### Go
 
 ```bash
 go install github.com/driftee-ai/drift@latest
@@ -25,11 +32,25 @@ drift init
 
 Checks for drift between your code and documentation based on the rules in your `.drift.yaml` file.
 
+**Check all files:**
+
 ```bash
 drift check
 ```
 
-You can also specify a custom configuration file using the `--config` flag:
+**Check only changed files (in a git repository):**
+
+```bash
+drift check --changed-files
+```
+
+**Check specific files:**
+
+```bash
+drift check path/to/your/file.go
+```
+
+**Use a custom configuration file:**
 
 ```bash
 drift check --config /path/to/your/config.yaml
@@ -73,9 +94,22 @@ To use the Gemini provider, you need to set the `GEMINI_API_KEY` environment var
 export GEMINI_API_KEY="your-api-key"
 ```
 
+## Community & Support
+
+- **Found a bug?** [File an issue](https://github.com/driftee-ai/drift/issues)
+- **Have a question or suggestion?** [Start a discussion](https://github.com/driftee-ai/drift/discussions)
+
 ## Contributing
 
-Contributions are welcome! Here's how to get started:
+Contributions are welcome! We'd love your help in making `drift` even better.
+
+Please see our [Contributing Guidelines](CONTRIBUTING.md) for more information.
+
+Here's a quick guide to get you started:
 
 - **Run tests:** `make test`
 - **Run linter:** `make lint`
+
+## License
+
+`drift` is licensed under the [Apache License 2.0](LICENSE).
