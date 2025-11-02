@@ -18,7 +18,8 @@ builds:
     ldflags:
       - -s -w -X github.com/driftee-ai/drift/cmd.version={{.Version}} -X github.com/driftee-ai/drift/cmd.commit={{.Commit}} -X github.com/driftee-ai/drift/cmd.date={{.Date}}
 archives:
-  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os | replace \"darwin\" \"Darwin\" | replace \"linux\" \"Linux\" | replace \"windows\" \"Windows\" }}_{{ .Arch | replace \"amd64\" \"x86_64\" }}"
+  - name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{- if eq .Os "darwin" }}Darwin{{ else if eq .Os "linux" }}Linux{{ else if eq .Os "windows" }}Windows{{ else }}{{ .Os }}{{ end }}_{{- if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -29,23 +30,18 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-brews:
+homebrew_casks:
   - name: drift
-    tap:
+    repository:
       owner: driftee-ai
       name: homebrew-drift
-      # If you use a different branch for your tap, you can set it here.
-      # branch: main
     homepage: "https://github.com/driftee-ai/drift"
     description: "A command-line tool to detect and prevent drift between your code and your documentation."
     license: "Apache-2.0"
-    # The commit author used for the Homebrew tap update.
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
-    # The install block for the formula.
     install: |
       bin.install "drift"
-    # The test block for the formula.
     test: |
       system "#{bin}/drift", "version"
