@@ -1,4 +1,4 @@
-.PHONY: build test release
+.PHONY: build test release dist clean-dist
 
 build:
 	go build -o drift .
@@ -22,3 +22,31 @@ release: test
 	fi
 	git tag $(VERSION)
 	git push origin $(VERSION)
+
+DIST_DIR := dist
+APP_NAME := drift
+
+dist: clean-dist
+	@echo "Building binaries for multiple platforms..."
+	@mkdir -p $(DIST_DIR)
+
+	# Linux AMD64
+	GOOS=linux GOARCH=amd64 go build -o $(DIST_DIR)/$(APP_NAME)-linux-amd64 .
+	# Linux ARM64
+	GOOS=linux GOARCH=arm64 go build -o $(DIST_DIR)/$(APP_NAME)-linux-arm64 .
+
+	# macOS AMD64
+	GOOS=darwin GOARCH=amd64 go build -o $(DIST_DIR)/$(APP_NAME)-darwin-amd64 .
+	# macOS ARM64
+	GOOS=darwin GOARCH=arm64 go build -o $(DIST_DIR)/$(APP_NAME)-darwin-arm64 .
+
+	# Windows AMD64
+	GOOS=windows GOARCH=amd64 go build -o $(DIST_DIR)/$(APP_NAME)-windows-amd64.exe .
+	# Windows ARM64
+	GOOS=windows GOARCH=arm64 go build -o $(DIST_DIR)/$(APP_NAME)-windows-arm64.exe .
+
+	@echo "Binaries built in $(DIST_DIR)/"
+
+clean-dist:
+	@echo "Cleaning $(DIST_DIR)/ directory..."
+	@rm -rf $(DIST_DIR)
