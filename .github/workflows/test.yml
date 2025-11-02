@@ -26,6 +26,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Drift Check
-        uses: ./.github/actions/drift-check
+        uses: ./actions/drift-check
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
