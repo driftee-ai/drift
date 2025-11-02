@@ -62,6 +62,8 @@ func TestCheckCommand_GeminiProvider_NoApiKey(t *testing.T) {
 }
 
 func TestCheckCommand_GeminiProvider_WithApiKey(t *testing.T) {
+	t.Log("Running live Gemini API test: WithApiKey") // Added log
+
 	// Skip this test if GEMINI_API_KEY is not set
 	if os.Getenv("GEMINI_API_KEY") == "" {
 		t.Skip("GEMINI_API_KEY not set, skipping live Gemini API test")
@@ -72,8 +74,10 @@ func TestCheckCommand_GeminiProvider_WithApiKey(t *testing.T) {
 	cmd.Env = append(os.Environ(), "GEMINI_API_KEY="+os.Getenv("GEMINI_API_KEY"))
 
 	output, err := cmd.CombinedOutput()
+	t.Logf("Command output:\n%s", string(output)) // Added log
+
 	if err != nil {
-		t.Fatalf("check command failed: %v\nOutput:\n%s", err, string(output))
+		t.Fatalf("check command failed: %v", err)
 	}
 
 	// Assert on the output (assuming test data is in sync)
@@ -84,6 +88,8 @@ func TestCheckCommand_GeminiProvider_WithApiKey(t *testing.T) {
 }
 
 func TestCheckCommand_CatchesMissingParam(t *testing.T) {
+	t.Log("Running live Gemini API test: CatchesMissingParam") // Added log
+
 	// Skip this test if GEMINI_API_KEY is not set
 	if os.Getenv("GEMINI_API_KEY") == "" {
 		t.Skip("GEMINI_API_KEY not set, skipping live Gemini API test")
@@ -94,8 +100,10 @@ func TestCheckCommand_CatchesMissingParam(t *testing.T) {
 	cmd.Env = append(os.Environ(), "GEMINI_API_KEY="+os.Getenv("GEMINI_API_KEY"))
 
 	output, err := cmd.CombinedOutput()
+	t.Logf("Command output:\n%s", string(output)) // Added log
+
 	if err == nil {
-		t.Fatalf("check command should have failed, but it didn't.\nOutput:\n%s", string(output))
+		t.Fatalf("check command should have failed, but it didn't.")
 	}
 
 	// Assert on the output
