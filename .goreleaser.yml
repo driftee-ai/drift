@@ -35,6 +35,7 @@ brews:
     repository:
       owner: driftee-ai
       name: homebrew-drift
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     homepage: "https://github.com/driftee-ai/drift"
     description: "A command-line tool to detect and prevent drift between your code and your documentation."
     license: "Apache-2.0"
