@@ -12,23 +12,23 @@ var (
 	date    = "unknown"
 )
 
+func init() {
+	rootCmd.PersistentFlags().BoolP("version", "v", false, "Print the version and exit")
+}
+
 var rootCmd = &cobra.Command{
 	Use:   "drift",
 	Short: "Drift is a tool for detecting and preventing drift between your code and your documentation.",
+	Version: fmt.Sprintf("drift version %s, commit %s, built at %s", version, commit, date),
 	Run: func(cmd *cobra.Command, args []string) {
+		if v, _ := cmd.Flags().GetBool("version"); v {
+			fmt.Println(cmd.Version)
+			return
+		}
 		fmt.Println("Hello from drift!")
 	},
 }
 
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Prints the version, commit, and build date",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("drift version %s, commit %s, built at %s\n", version, commit, date)
-	},
-}
-
 func Execute() error {
-	rootCmd.AddCommand(versionCmd)
 	return rootCmd.Execute()
 }
