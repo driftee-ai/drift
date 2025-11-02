@@ -30,7 +30,7 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-homebrew_casks:
+brews:
   - name: drift
     repository:
       owner: driftee-ai
