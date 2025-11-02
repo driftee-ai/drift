@@ -1,0 +1,55 @@
+# .goreleaser.yml
+# Make sure to check the documentation at https://goreleaser.com
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    main: .
+    ldflags:
+      - -s -w -X github.com/driftee-ai/drift/cmd.version={{.Version}} -X github.com/driftee-ai/drift/cmd.commit={{.Commit}} -X github.com/driftee-ai/drift/cmd.date={{.Date}}
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+brews:
+  - name: drift
+    tap:
+      owner: driftee-ai
+      name: homebrew-drift
+      # If you use a different branch for your tap, you can set it here.
+      # branch: main
+    homepage: "https://github.com/driftee-ai/drift"
+    description: "A command-line tool to detect and prevent drift between your code and your documentation."
+    license: "Apache-2.0"
+    # The commit author used for the Homebrew tap update.
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    # The install block for the formula.
+    install: |
+      bin.install "drift"
+    # The test block for the formula.
+    test: |
+      system "#{bin}/drift", "version"

@@ -504,3 +504,36 @@ This package will be added when we build the "Smart Context" optimization.
 - **viper** - For reading `.drift.yaml` config
 - **go-tree-sitter** - For the "Smart Context" optimization
 - **golangci-lint** - For linting the Go code
+
+### End-to-End Testing
+
+Our end-to-end (E2E) tests are located in `main_test.go` and use a structured `testdata/e2e` directory to organize test cases. These tests run the compiled `drift` binary against specific code and documentation examples to verify the tool's behavior.
+
+**`testdata/e2e` Directory Structure:**
+
+Test cases are categorized by their expected outcome:
+
+-   **`true_positives/`**: Contains test cases where a drift *exists*, and the tool is expected to *correctly detect it*.
+    -   Example: `missing_param_in_docs/` (code has a parameter not in docs).
+-   **`true_negatives/`**: Contains test cases where code and documentation are *in sync*, and the tool is expected to *correctly confirm that*.
+    -   Example: `in_sync_example/` (code and docs match perfectly).
+-   **`false_positives/`**: Contains test cases where a naive check might incorrectly flag a drift, but the LLM-based tool should *correctly identify them as in sync*.
+    -   Example: `cosmetic_diff_example/` (semantically equivalent code/docs with minor wording differences).
+-   **`false_negatives/`**: Contains test cases where a subtle drift *exists*, and the tool is expected to *correctly detect it* (i.e., it's a real drift that might be missed by simpler checks).
+    -   Example: `subtle_drift_example/` (code returns a pointer, docs say struct).
+
+**Adding New E2E Tests:**
+
+1.  Create a new subdirectory under the appropriate classification (e.g., `testdata/e2e/true_positives/my_new_test`).
+2.  Inside this directory, create:
+    -   A `.drift.yaml` file configured for the `gemini` provider, pointing to `code.go` and `docs.md` within the same directory.
+    -   A `code.go` file with the relevant code.
+    -   A `docs.md` file with the corresponding documentation.
+3.  Add a new test function to `main_test.go` that:
+    -   Sets `GEMINI_API_KEY` if it's a live test.
+    -   Runs the `drift check` command with the `.drift.yaml` from your new test case.
+    -   Asserts the expected outcome (e.g., "Result: In Sync" or "Result: Out of Sync").
+
+**Conditional Execution of Live Tests:**
+
+Tests that interact with the Gemini API (i.e., those using the `gemini` provider in their `.drift.yaml`) are skipped if the `GEMINI_API_KEY` environment variable is not set. This allows for fast local development without requiring an API key, while ensuring live tests run in CI environments where the key is configured as a secret.

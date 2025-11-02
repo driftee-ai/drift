@@ -1,0 +1,8 @@
+version: 1
+provider: gemini
+rules:
+  - name: "Subtle Drift Example"
+    code:
+      - "testdata/e2e/false_negatives/subtle_drift_example/code.go"
+    docs:
+      - "testdata/e2e/false_negatives/subtle_drift_example/docs.md"
