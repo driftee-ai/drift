@@ -1,0 +1,34 @@
+name: 'Drift Check'
+description: 'Run drift to check for documentation drift'
+inputs:
+  config:
+    description: 'Path to the .drift.yaml config file'
+    required: false
+    default: '.drift.yaml'
+  gemini-api-key:
+    description: 'API key for the Gemini provider'
+    required: true
+  version:
+    description: 'The version of drift to install'
+    required: false
+    default: 'v0.1.11'
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25'
+
+    - name: Install Drift
+      run: go install github.com/driftee-ai/drift@${{ inputs.version }}
+      shell: bash
+
+    - name: Run Drift Check
+      env:
+        GEMINI_API_KEY: ${{ inputs.gemini-api-key }}
+      run: drift check --config ${{ inputs.config }}
+      shell: bash

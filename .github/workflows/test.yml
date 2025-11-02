@@ -19,3 +19,13 @@ jobs:
 
     - name: Run tests
       run: make test
+
+  drift-check:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Drift Check
+        uses: ./.github/actions/drift-check
+        with:
+          gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
