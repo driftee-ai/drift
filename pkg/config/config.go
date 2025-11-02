@@ -7,8 +7,9 @@ import (
 )
 
 type Config struct {
-	Version int    `yaml:"version"`
-	Rules   []Rule `yaml:"rules"`
+	Version  int    `yaml:"version"`
+	Provider string `yaml:"provider"`
+	Rules    []Rule `yaml:"rules"`
 }
 
 type Rule struct {
@@ -36,7 +37,8 @@ func Load(path string) (*Config, error) {
 // CreateScaffold creates a blank, commented .drift.yaml for drift init
 func CreateScaffold(path string) error {
 	exampleConfig := Config{
-		Version: 1,
+		Version:  1,
+		Provider: "gemini",
 		Rules: []Rule{
 			{
 				Name: "Example API Documentation",

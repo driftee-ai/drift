@@ -503,3 +503,4 @@ This package will be added when we build the "Smart Context" optimization.
 - **cobra** - For CLI commands (`init`, `check`)
 - **viper** - For reading `.drift.yaml` config
 - **go-tree-sitter** - For the "Smart Context" optimization
+- **golangci-lint** - For linting the Go code

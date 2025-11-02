@@ -21,7 +21,11 @@ var checkCmd = &cobra.Command{
 			log.Fatalf("Failed to load config file %s: %v", configFile, err)
 		}
 
-		assessor := assessor.NewDummyAssessor() // Create the dummy assessor
+		// Create the assessor using the factory
+		docAssessor, err := assessor.New(cfg.Provider)
+		if err != nil {
+			log.Fatalf("Failed to create assessor: %v", err)
+		}
 
 		fmt.Printf("Loaded %d rules from %s\n", len(cfg.Rules), configFile)
 		for _, rule := range cfg.Rules {
@@ -54,7 +58,7 @@ var checkCmd = &cobra.Command{
 			fmt.Printf("    Found %d doc files, total size: %d bytes\n", len(docFiles), len(docContent))
 
 			// Assess the drift
-			result, err := assessor.Assess(docContent, codeContent)
+			result, err := docAssessor.Assess(docContent, codeContent)
 			if err != nil {
 				log.Printf("Error assessing drift for rule '%s': %v", rule.Name, err)
 				continue

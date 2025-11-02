@@ -18,20 +18,41 @@ func setupTestFiles(t *testing.T) (string, func()) {
 	}
 
 	// Create dummy files
-	os.MkdirAll(filepath.Join(tmpDir, "src", "api"), 0755)
-	os.WriteFile(filepath.Join(tmpDir, "src", "api", "user.go"), []byte("package api\n// User struct"), 0644)
-	os.WriteFile(filepath.Join(tmpDir, "src", "api", "auth.go"), []byte("package api\n// Auth struct"), 0644)
-	os.MkdirAll(filepath.Join(tmpDir, "docs", "api"), 0755)
-	os.WriteFile(filepath.Join(tmpDir, "docs", "api", "users.md"), []byte("# Users API"), 0644)
-	os.WriteFile(filepath.Join(tmpDir, "docs", "api", "auth.md"), []byte("# Auth API"), 0644)
-	os.WriteFile(filepath.Join(tmpDir, "README.md"), []byte("# Project README"), 0644)
+	if err := os.MkdirAll(filepath.Join(tmpDir, "src", "api"), 0755); err != nil {
+		t.Fatalf("Failed to create src/api dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "src", "api", "user.go"), []byte("package api\n// User struct"), 0644); err != nil {
+		t.Fatalf("Failed to write user.go: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "src", "api", "auth.go"), []byte("package api\n// Auth struct"), 0644); err != nil {
+		t.Fatalf("Failed to write auth.go: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(tmpDir, "docs", "api"), 0755); err != nil {
+		t.Fatalf("Failed to create docs/api dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "docs", "api", "users.md"), []byte("# Users API"), 0644); err != nil {
+		t.Fatalf("Failed to write users.md: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "docs", "api", "auth.md"), []byte("# Auth API"), 0644); err != nil {
+		t.Fatalf("Failed to write auth.md: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "README.md"), []byte("# Project README"), 0644); err != nil {
+		t.Fatalf("Failed to write README.md: %v", err)
+	}
 
 	// Change to the temporary directory for globbing to work relative to it
-	originalDir, _ := os.Getwd()
-	os.Chdir(tmpDir)
+	originalDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get current working directory: %v", err)
+	}
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("Failed to change directory to %s: %v", tmpDir, err)
+	}
 
 	cleanup := func() {
-		os.Chdir(originalDir) // Change back to original directory
+		if err := os.Chdir(originalDir); err != nil {
+			t.Errorf("Failed to change back to original directory: %v", err)
+		}
 		os.RemoveAll(tmpDir)
 	}
 

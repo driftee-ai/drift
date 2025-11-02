@@ -20,7 +20,11 @@ func TestRootCmd(t *testing.T) {
 	// copy the output in a separate goroutine so printing can't block indefinitely
 	go func() {
 		var buf bytes.Buffer
-		io.Copy(&buf, r)
+		if _, err := io.Copy(&buf, r); err != nil {
+			// Don't call t.Fatalf here, just send an empty string
+			outC <- ""
+			return
+		}
 		outC <- buf.String()
 	}()
 

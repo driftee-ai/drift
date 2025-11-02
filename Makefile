@@ -1,4 +1,4 @@
-.PHONY: build test release dist clean-dist
+.PHONY: build test release dist clean-dist lint
 
 build:
 	go build -o drift .
@@ -50,3 +50,6 @@ dist: clean-dist
 clean-dist:
 	@echo "Cleaning $(DIST_DIR)/ directory..."
 	@rm -rf $(DIST_DIR)
+
+lint:
+	$(shell go env GOPATH)/bin/golangci-lint run ./...

@@ -34,6 +34,7 @@ func TestCreateScaffold(t *testing.T) {
 
 	// Define the expected content (without comments for easier comparison)
 	expectedContent := `version: 1
+provider: gemini
 rules:
     - name: Example API Documentation
       code:
