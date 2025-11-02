@@ -112,3 +112,75 @@ func TestCheckCommand_CatchesMissingParam(t *testing.T) {
 		t.Errorf("Expected output to contain '%s', but got:\n%s", expectedOutput, string(output))
 	}
 }
+
+func TestCheckCommand_InSync(t *testing.T) {
+	// Skip this test if GEMINI_API_KEY is not set
+	if os.Getenv("GEMINI_API_KEY") == "" {
+		t.Skip("GEMINI_API_KEY not set, skipping live Gemini API test")
+	}
+
+	// Run the check command with the config file for the in-sync example
+	cmd := exec.Command("./"+testBinaryName, "check", "--config", "testdata/e2e/true_negatives/in_sync_example/.drift.yaml")
+	cmd.Env = append(os.Environ(), "GEMINI_API_KEY="+os.Getenv("GEMINI_API_KEY"))
+
+	output, err := cmd.CombinedOutput()
+	t.Logf("Command output:\n%s", string(output))
+
+	if err != nil {
+		t.Fatalf("check command failed: %v", err)
+	}
+
+	// Assert on the output
+	expectedOutput := "Result: In Sync"
+	if !strings.Contains(string(output), expectedOutput) {
+		t.Errorf("Expected output to contain '%s', but got:\n%s", expectedOutput, string(output))
+	}
+}
+
+func TestCheckCommand_CosmeticDiff(t *testing.T) {
+	// Skip this test if GEMINI_API_KEY is not set
+	if os.Getenv("GEMINI_API_KEY") == "" {
+		t.Skip("GEMINI_API_KEY not set, skipping live Gemini API test")
+	}
+
+	// Run the check command with the config file for the cosmetic diff example
+	cmd := exec.Command("./"+testBinaryName, "check", "--config", "testdata/e2e/false_positives/cosmetic_diff_example/.drift.yaml")
+	cmd.Env = append(os.Environ(), "GEMINI_API_KEY="+os.Getenv("GEMINI_API_KEY"))
+
+	output, err := cmd.CombinedOutput()
+	t.Logf("Command output:\n%s", string(output))
+
+	if err != nil {
+		t.Fatalf("check command failed: %v", err)
+	}
+
+	// Assert on the output
+	expectedOutput := "Result: In Sync"
+	if !strings.Contains(string(output), expectedOutput) {
+		t.Errorf("Expected output to contain '%s', but got:\n%s", expectedOutput, string(output))
+	}
+}
+
+func TestCheckCommand_SubtleDrift(t *testing.T) {
+	// Skip this test if GEMINI_API_KEY is not set
+	if os.Getenv("GEMINI_API_KEY") == "" {
+		t.Skip("GEMINI_API_KEY not set, skipping live Gemini API test")
+	}
+
+	// Run the check command with the config file for the subtle drift example
+	cmd := exec.Command("./"+testBinaryName, "check", "--config", "testdata/e2e/false_negatives/subtle_drift_example/.drift.yaml")
+	cmd.Env = append(os.Environ(), "GEMINI_API_KEY="+os.Getenv("GEMINI_API_KEY"))
+
+	output, err := cmd.CombinedOutput()
+	t.Logf("Command output:\n%s", string(output))
+
+	if err == nil {
+		t.Fatalf("check command should have failed, but it didn't.")
+	}
+
+	// Assert on the output
+	expectedOutput := "Result: Out of Sync"
+	if !strings.Contains(string(output), expectedOutput) {
+		t.Errorf("Expected output to contain '%s', but got:\n%s", expectedOutput, string(output))
+	}
+}
