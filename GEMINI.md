@@ -427,7 +427,7 @@ Uses Cobra for command-line interface. Contains zero business logic.
 
 **cmd/check.go** - Defines `drift check`
 
-- Reads flags like `--changed-files`
+- Reads flags like `--config` (for specifying the config file) and `--changed-files`
 - Calls `config.Load()` to get the config
 - Calls [`assessor.New`](http://assessor.New)`()` to get the right assessor
 - Calls `drift.RunCheck()` to orchestrate the check
@@ -503,3 +503,4 @@ This package will be added when we build the "Smart Context" optimization.
 - **cobra** - For CLI commands (`init`, `check`)
 - **viper** - For reading `.drift.yaml` config
 - **go-tree-sitter** - For the "Smart Context" optimization
+- **golangci-lint** - For linting the Go code
