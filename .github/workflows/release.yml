@@ -25,3 +25,28 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+
+      - name: Update Major Version Tag
+        run: |
+          # Extract the full version tag (e.g., v1.0.0)
+          FULL_VERSION=${GITHUB_REF_NAME}
+          # Extract the major version (e.g., v1)
+          MAJOR_VERSION=$(echo $FULL_VERSION | sed -E 's/^(v[0-9]+)\..*/\1/')
+
+          echo "Full version: $FULL_VERSION"
+          echo "Major version: $MAJOR_VERSION"
+
+          # Configure Git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Fetch all tags to ensure we have the latest
+          git fetch origin --tags
+
+          # Create/move the major version tag
+          git tag -f $MAJOR_VERSION $FULL_VERSION
+
+          # Force push the major version tag
+          git push -f origin $MAJOR_VERSION
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

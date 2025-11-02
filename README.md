@@ -20,6 +20,12 @@ go install github.com/driftee-ai/drift@latest
 
 ## Usage
 
+All `drift` commands support a global `--version` or `-v` flag to print the version and exit.
+
+```bash
+drift --version
+```
+
 ### `drift init`
 
 Initializes a new project by creating a `.drift.yaml` configuration file in the current directory.
@@ -36,18 +42,6 @@ Checks for drift between your code and documentation based on the rules in your 
 
 ```bash
 drift check
-```
-
-**Check only changed files (in a git repository):**
-
-```bash
-drift check --changed-files
-```
-
-**Check specific files:**
-
-```bash
-drift check path/to/your/file.go
 ```
 
 **Use a custom configuration file:**
