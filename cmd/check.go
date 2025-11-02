@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/driftee-ai/drift/pkg/assessor"
 	"github.com/driftee-ai/drift/pkg/config"
 	"github.com/driftee-ai/drift/pkg/files"
 	"github.com/spf13/cobra"
@@ -13,14 +14,16 @@ var checkCmd = &cobra.Command{
 	Use:   "check",
 	Short: "Checks for drift between your code and your documentation.",
 	Run: func(cmd *cobra.Command, args []string) {
-		configFile, _ := cmd.Flags().GetString("config") // Get the config file path from the flag
+		configFile, _ := cmd.Flags().GetString("config")
 
 		cfg, err := config.Load(configFile)
 		if err != nil {
 			log.Fatalf("Failed to load config file %s: %v", configFile, err)
 		}
 
-		fmt.Printf("Loaded %d rules from %s\n", len(cfg.Rules), configFile) // Updated print statement
+		assessor := assessor.NewDummyAssessor() // Create the dummy assessor
+
+		fmt.Printf("Loaded %d rules from %s\n", len(cfg.Rules), configFile)
 		for _, rule := range cfg.Rules {
 			fmt.Printf("  - Rule: %s\n", rule.Name)
 
@@ -49,11 +52,24 @@ var checkCmd = &cobra.Command{
 				continue
 			}
 			fmt.Printf("    Found %d doc files, total size: %d bytes\n", len(docFiles), len(docContent))
+
+			// Assess the drift
+			result, err := assessor.Assess(docContent, codeContent)
+			if err != nil {
+				log.Printf("Error assessing drift for rule '%s': %v", rule.Name, err)
+				continue
+			}
+
+			if result.IsInSync {
+				fmt.Printf("    Result: In Sync (%s)\n", result.Reason)
+			} else {
+				fmt.Printf("    Result: Out of Sync (%s)\n", result.Reason)
+			}
 		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(checkCmd)
-	checkCmd.Flags().StringP("config", "c", ".drift.yaml", "Path to the drift configuration file") // Added flag
+	checkCmd.Flags().StringP("config", "c", ".drift.yaml", "Path to the drift configuration file")
 }
