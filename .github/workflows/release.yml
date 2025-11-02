@@ -24,7 +24,4 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # The tap repository is owned by the same user so GITHUB_TOKEN should be enough.
-          # If you get an error, you might need to create a personal access token
-          # with repo permissions and add it as a secret named HOMEBREW_TAP_GITHUB_TOKEN.
-          # HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
