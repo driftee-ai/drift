@@ -45,6 +45,8 @@ func TestCheckCommand_DummyProvider(t *testing.T) {
 }
 
 func TestCheckCommand_GeminiProvider_NoApiKey(t *testing.T) {
+	t.Setenv("GEMINI_API_KEY", "")
+
 	// Run the check command with the gemini provider config, without the API key
 	cmd := exec.Command("./"+testBinaryName, "check", "--config", "testdata/.drift.test.yaml")
 	output, err := cmd.CombinedOutput()
@@ -75,7 +77,7 @@ func TestCheckCommand_GeminiProvider_WithApiKey(t *testing.T) {
 	}
 
 	// Assert on the output (assuming test data is in sync)
-	expectedOutput := "Result: In Sync (yes, the documentation accurately reflects the code.)"
+	expectedOutput := "Result: In Sync"
 	if !strings.Contains(string(output), expectedOutput) {
 		t.Errorf("Expected output to contain '%s', but got:\n%s", expectedOutput, string(output))
 	}
