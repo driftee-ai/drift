@@ -28,7 +28,7 @@ func NewGeminiAssessor() (*GeminiAssessor, error) {
 		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
 
-	model := client.GenerativeModel("gemini-pro") // Or another suitable model
+	model := client.GenerativeModel("gemini-2.5-flash") // Or another suitable model
 
 	return &GeminiAssessor{client: model}, nil
 }
