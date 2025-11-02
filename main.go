@@ -1,7 +1,13 @@
 package main
 
-import "github.com/driftee-ai/drift/cmd"
+import (
+	"os"
+
+	"github.com/driftee-ai/drift/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }

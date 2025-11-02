@@ -14,10 +14,10 @@ func TestNewAssessor(t *testing.T) {
 		wantType interface{} // Expected type of the returned assessor
 	}{
 		{
-			name:     "Gemini provider",
+			name:     "Gemini provider - no api key",
 			provider: "gemini",
-			wantErr:  true, // Expect error because GEMINI_API_KEY is not set
-			wantType: &assessor.GeminiAssessor{},
+			wantErr:  true,
+			wantType: nil,
 		},
 		{
 			name:     "Dummy provider",
@@ -35,6 +35,10 @@ func TestNewAssessor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "Gemini provider - no api key" {
+				t.Setenv("GEMINI_API_KEY", "")
+			}
+
 			got, err := assessor.New(tt.provider)
 
 			if (err != nil) != tt.wantErr {

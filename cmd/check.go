@@ -13,21 +13,21 @@ import (
 var checkCmd = &cobra.Command{
 	Use:   "check",
 	Short: "Checks for drift between your code and your documentation.",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		configFile, _ := cmd.Flags().GetString("config")
 
 		cfg, err := config.Load(configFile)
 		if err != nil {
-			log.Fatalf("Failed to load config file %s: %v", configFile, err)
+			return fmt.Errorf("failed to load config file %s: %w", configFile, err)
 		}
 
-		// Create the assessor using the factory
 		docAssessor, err := assessor.New(cfg.Provider)
 		if err != nil {
-			log.Fatalf("Failed to create assessor: %v", err)
+			return fmt.Errorf("failed to create assessor: %w", err)
 		}
 
-		fmt.Printf("Loaded %d rules from %s\n", len(cfg.Rules), configFile)
+		fmt.Printf("Loaded %d rules from %s (provider: %s)\n", len(cfg.Rules), configFile, cfg.Provider)
+		allInSync := true
 		for _, rule := range cfg.Rules {
 			fmt.Printf("  - Rule: %s\n", rule.Name)
 
@@ -35,11 +35,13 @@ var checkCmd = &cobra.Command{
 			codeFiles, err := files.FindFiles(rule.Code)
 			if err != nil {
 				log.Printf("Error finding code files for rule '%s': %v", rule.Name, err)
+				allInSync = false
 				continue
 			}
 			codeContent, err := files.ReadAndConcatenate(codeFiles)
 			if err != nil {
 				log.Printf("Error reading code content for rule '%s': %v", rule.Name, err)
+				allInSync = false
 				continue
 			}
 			fmt.Printf("    Found %d code files, total size: %d bytes\n", len(codeFiles), len(codeContent))
@@ -48,11 +50,13 @@ var checkCmd = &cobra.Command{
 			docFiles, err := files.FindFiles(rule.Docs)
 			if err != nil {
 				log.Printf("Error finding doc files for rule '%s': %v", rule.Name, err)
+				allInSync = false
 				continue
 			}
 			docContent, err := files.ReadAndConcatenate(docFiles)
 			if err != nil {
 				log.Printf("Error reading doc content for rule '%s': %v", rule.Name, err)
+				allInSync = false
 				continue
 			}
 			fmt.Printf("    Found %d doc files, total size: %d bytes\n", len(docFiles), len(docContent))
@@ -61,6 +65,7 @@ var checkCmd = &cobra.Command{
 			result, err := docAssessor.Assess(docContent, codeContent)
 			if err != nil {
 				log.Printf("Error assessing drift for rule '%s': %v", rule.Name, err)
+				allInSync = false // Consider assessment error as out of sync
 				continue
 			}
 
@@ -68,8 +73,14 @@ var checkCmd = &cobra.Command{
 				fmt.Printf("    Result: In Sync (%s)\n", result.Reason)
 			} else {
 				fmt.Printf("    Result: Out of Sync (%s)\n", result.Reason)
+				allInSync = false // Set flag to false
 			}
 		}
+
+		if !allInSync {
+			return fmt.Errorf("drift detected") // Return an error
+		}
+		return nil
 	},
 }
 
