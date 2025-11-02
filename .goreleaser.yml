@@ -18,11 +18,7 @@ builds:
     ldflags:
       - -s -w -X github.com/driftee-ai/drift/cmd.version={{.Version}} -X github.com/driftee-ai/drift/cmd.commit={{.Commit}} -X github.com/driftee-ai/drift/cmd.date={{.Date}}
 archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      amd64: x86_64
+  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os | replace \"darwin\" \"Darwin\" | replace \"linux\" \"Linux\" | replace \"windows\" \"Windows\" }}_{{ .Arch | replace \"amd64\" \"x86_64\" }}"
 checksum:
   name_template: 'checksums.txt'
 snapshot:
