@@ -1,0 +1,34 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+*.o
+*.a
+*.gcno
+
+# Test binary, generated with `go test -c`
+*.test
+
+# Output of the go toolchain
+_obj/
+_test/
+_pkg/
+
+# Go module cache
+.go/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.*
+
+# Log files
+*.log
