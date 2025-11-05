@@ -1,17 +1,59 @@
+
 import { Footer, Layout, Navbar } from "nextra-theme-docs";
 import { Banner, Head } from "nextra/components";
 import { getPageMap } from "nextra/page-map";
 import "nextra-theme-docs/style.css";
+import { useEffect, useState } from "react";
 
 export const metadata = {
   // Define your metadata here
   // For more information on metadata API, see: https://nextjs.org/docs/app/building-your-application/optimizing/metadata
 };
 
+const VersionSelector = () => {
+  const [versions, setVersions] = useState([]);
+  const [currentVersion, setCurrentVersion] = useState("");
+
+  useEffect(() => {
+    fetch("/versions.json")
+      .then((res) => res.json())
+      .then((data) => {
+        setVersions(data);
+        const pathParts = window.location.pathname.split("/");
+        if (pathParts.length > 1 && data.includes(pathParts[1])) {
+          setCurrentVersion(pathParts[1]);
+        } else {
+          setCurrentVersion("latest");
+        }
+      });
+  }, []);
+
+  const handleVersionChange = (e) => {
+    const newVersion = e.target.value;
+    const pathParts = window.location.pathname.split("/");
+    if (pathParts.length > 2 && versions.includes(pathParts[1])) {
+      window.location.pathname = `/${newVersion}/${pathParts.slice(2).join("/")}`;
+    } else {
+      window.location.pathname = `/${newVersion}`;
+    }
+  };
+
+  return (
+    <select value={currentVersion} onChange={handleVersionChange}>
+      {versions.map((version) => (
+        <option key={version} value={version}>
+          {version}
+        </option>
+      ))}
+    </select>
+  );
+};
+
 const banner = <Banner storageKey="some-key">Nextra 4.0 is released 🎉</Banner>;
 const navbar = (
   <Navbar
     logo={<b>Nextra</b>}
+    extra={<VersionSelector />}
     // ... Your additional navbar options
   />
 );
@@ -47,3 +89,4 @@ export default async function RootLayout({ children }) {
     </html>
   );
 }
+

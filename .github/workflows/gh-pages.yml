@@ -1,0 +1,57 @@
+
+name: Deploy Docs to GitHub Pages
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./docs
+
+      - name: Build static site
+        run: npm run build
+        working-directory: ./docs
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/out
+          destination_dir: ${{ github.ref_name }}
+          keep_files: true
+
+      - name: Update versions.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages
+          git checkout gh-pages
+          
+          # Create versions.json if it doesn't exist
+          if [ ! -f "versions.json" ]; then
+            echo '[]' > versions.json
+          fi
+          
+          # Add the new version to the list
+          jq --arg version "${{ github.ref_name }}" '. | . + ["latest", $version] | unique' versions.json > versions.json.tmp && mv versions.json.tmp versions.json
+          
+          git add versions.json
+          git commit -m "Update versions.json for ${{ github.ref_name }}"
+          git push origin gh-pages
+        working-directory: ./docs/out
