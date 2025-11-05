@@ -34,3 +34,8 @@ Thumbs.db
 
 # Log files
 *.log
+
+_pagefind/
+
+node_modules/
+.next/
