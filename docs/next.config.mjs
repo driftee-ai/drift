@@ -12,8 +12,6 @@ const withNextra = nextra({
 export default withNextra({
   output: "export",
   basePath: basePath,
-  images: {
-    path: `${basePath}/_next/image`,
-  },
+  trailingSlash: true,
   // ... Add regular Next.js options here
 });

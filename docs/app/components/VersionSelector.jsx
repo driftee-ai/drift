@@ -12,7 +12,7 @@ const VersionSelector = () => {
       .then((data) => {
         setVersions(data);
         const pathParts = window.location.pathname.split('/');
-        if (pathParts.length > 1 && data.includes(pathParts[1])) {
+        if (pathParts.length > 1 && (data.includes(pathParts[1]) || pathParts[1] === 'latest')) {
           setCurrentVersion(pathParts[1]);
         } else {
           setCurrentVersion('latest');
@@ -23,10 +23,11 @@ const VersionSelector = () => {
   const handleVersionChange = (e) => {
     const newVersion = e.target.value;
     const pathParts = window.location.pathname.split('/');
-    if (pathParts.length > 2 && versions.includes(pathParts[1])) {
-      window.location.pathname = `/${newVersion}/${pathParts.slice(2).join('/')}`;
+    if (pathParts.length > 2 && (versions.includes(pathParts[1]) || pathParts[1] === 'latest')) {
+      const restOfPath = pathParts.slice(2).join('/');
+      window.location.pathname = `/${newVersion}/${restOfPath}`;
     } else {
-      window.location.pathname = `/${newVersion}`;
+      window.location.pathname = `/${newVersion}/`;
     }
   };
 
