@@ -35,6 +35,7 @@ jobs:
           publish_dir: ./docs/out
           destination_dir: ${{ github.ref_name }}
           keep_files: true
+          cname: docs.driftee.ai
 
       - name: Update versions.json
         run: |
