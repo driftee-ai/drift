@@ -65,4 +65,3 @@ jobs:
           git add versions.json latest/index.html
           git commit -m "Update versions.json and latest redirect for ${{ github.ref_name }}"
           git push origin gh-pages
-        working-directory: ./docs/out
