@@ -25,29 +25,24 @@ jobs:
         run: npm ci
         working-directory: ./docs
 
-      - name: Build and Deploy Versioned Docs
+      - name: Build and Stage Versioned Docs
         run: |
-          rm -rf ./docs/.next
-          BASE_PATH="/${{ github.ref_name }}" NEXT_PUBLIC_VERSION="${{ github.ref_name }}" npm run build
-        working-directory: ./docs
-      - uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/out
-          destination_dir: ${{ github.ref_name }}
-          keep_files: true
-          cname: docs.driftee.ai
+          rm -rf docs/.next
+          BASE_PATH="/${{ github.ref_name }}" NEXT_PUBLIC_VERSION="${{ github.ref_name }}" npm run build --prefix docs
+          mkdir -p staging
+          mv docs/out staging/${{ github.ref_name }}
 
-      - name: Build and Deploy Latest Docs
+      - name: Build and Stage Latest Docs
         run: |
-          rm -rf ./docs/.next
-          BASE_PATH="/latest" NEXT_PUBLIC_VERSION="${{ github.ref_name }}" npm run build
-        working-directory: ./docs
-      - uses: peaceiris/actions-gh-pages@v3
+          rm -rf docs/.next
+          BASE_PATH="/latest" NEXT_PUBLIC_VERSION="${{ github.ref_name }}" npm run build --prefix docs
+          mv docs/out staging/latest
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/out
-          destination_dir: latest
+          publish_dir: ./staging
           keep_files: true
           cname: docs.driftee.ai
 

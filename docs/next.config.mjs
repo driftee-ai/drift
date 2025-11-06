@@ -3,8 +3,6 @@ import nextra from "nextra";
 const isProd = process.env.NODE_ENV === "production";
 const basePath = process.env.BASE_PATH || "";
 
-console.log(`[next.config.js] Using basePath: '${basePath}'`);
-
 // Set up Nextra with its configuration
 const withNextra = nextra({
   // ... Add Nextra-specific options here
