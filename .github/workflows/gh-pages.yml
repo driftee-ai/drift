@@ -28,11 +28,7 @@ jobs:
       - name: Build and Deploy Versioned Docs
         run: |
           rm -rf ./docs/.next
-          echo "Setting BASE_PATH=/${{ github.ref_name }}"
-          echo "Setting NEXT_PUBLIC_VERSION=${{ github.ref_name }}"
-          echo "BASE_PATH=/${{ github.ref_name }}" >> $GITHUB_ENV
-          echo "NEXT_PUBLIC_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
-          npm run build
+          BASE_PATH="/${{ github.ref_name }}" NEXT_PUBLIC_VERSION="${{ github.ref_name }}" npm run build
         working-directory: ./docs
       - uses: peaceiris/actions-gh-pages@v3
         with:
@@ -45,11 +41,7 @@ jobs:
       - name: Build and Deploy Latest Docs
         run: |
           rm -rf ./docs/.next
-          echo "Setting BASE_PATH=/latest"
-          echo "Setting NEXT_PUBLIC_VERSION=${{ github.ref_name }}"
-          echo "BASE_PATH=/latest" >> $GITHUB_ENV
-          echo "NEXT_PUBLIC_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
-          npm run build
+          BASE_PATH="/latest" NEXT_PUBLIC_VERSION="${{ github.ref_name }}" npm run build
         working-directory: ./docs
       - uses: peaceiris/actions-gh-pages@v3
         with:
