@@ -1,0 +1,31 @@
+# Usage
+
+The `drift` CLI has two main commands: `init` and `check`.
+
+## `drift init`
+
+This command initializes a new project by creating a `.drift.yaml` configuration file in the current directory.
+
+```bash
+drift init
+```
+
+This will create a `.drift.yaml` file with some example configuration to get you started.
+
+## `drift check`
+
+This command checks for drift between your code and documentation based on the rules in your `.drift.yaml` file.
+
+To check all files:
+
+```bash
+drift check
+```
+
+You can also use a custom configuration file with the `--config` flag:
+
+```bash
+drift check --config /path/to/your/config.yaml
+```
+
+If `drift` detects any discrepancies, it will report them and exit with a non-zero exit code, making it easy to integrate into your CI/CD pipeline.
