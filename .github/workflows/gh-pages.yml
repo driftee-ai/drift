@@ -25,12 +25,12 @@ jobs:
         run: npm ci
         working-directory: ./docs
 
-      - name: Build static site
-        run: npm run build
+      - name: Build and Deploy Versioned Docs
+        run: |
+          echo "BASE_PATH=/${{ github.ref_name }}" >> $GITHUB_ENV
+          npm run build
         working-directory: ./docs
-
-      - name: Deploy to versioned directory
-        uses: peaceiris/actions-gh-pages@v3
+      - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs/out
@@ -38,8 +38,12 @@ jobs:
           keep_files: true
           cname: docs.driftee.ai
 
-      - name: Deploy to latest directory
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Build and Deploy Latest Docs
+        run: |
+          echo "BASE_PATH=/latest" >> $GITHUB_ENV
+          npm run build
+        working-directory: ./docs
+      - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs/out
