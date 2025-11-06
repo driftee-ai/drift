@@ -17,7 +17,10 @@ const navbar = (
   <Navbar
     logo={
       <>
-        <b>Drift</b> <VersionSelector version={version} />
+        <div style={{ marginRight: 12 }}>
+          <b>Drift</b>
+        </div>
+        <VersionSelector version={version} />
       </>
     }
   />
