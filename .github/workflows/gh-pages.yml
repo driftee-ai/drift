@@ -38,6 +38,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+<<<<<<< Updated upstream
           publish_dir: docs/out
           destination_dir: ${{ github.ref_name }}
           keep_files: true
@@ -65,3 +66,7 @@ jobs:
           git add versions.json latest/index.html
           git commit -m "Update versions.json and latest redirect for ${{ github.ref_name }}"
           git push origin gh-pages
+=======
+          publish_dir: ./docs/out
+          cname: docs.driftee.ai
+>>>>>>> Stashed changes
