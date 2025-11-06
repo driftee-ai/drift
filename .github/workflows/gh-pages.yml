@@ -28,6 +28,7 @@ jobs:
       - name: Build and Deploy Versioned Docs
         run: |
           echo "BASE_PATH=/${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
           npm run build
         working-directory: ./docs
       - uses: peaceiris/actions-gh-pages@v3
@@ -41,6 +42,7 @@ jobs:
       - name: Build and Deploy Latest Docs
         run: |
           echo "BASE_PATH=/latest" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
           npm run build
         working-directory: ./docs
       - uses: peaceiris/actions-gh-pages@v3

@@ -9,10 +9,12 @@ export const metadata = {
   // For more information on metadata API, see: https://nextjs.org/docs/app/building-your-application/optimizing/metadata
 };
 
+const version = process.env.NEXT_PUBLIC_VERSION;
+
 const banner = <Banner storageKey="some-key">Nextra 4.0 is released 🎉</Banner>;
 const navbar = (
   <Navbar
-    logo={<b>Nextra</b>}
+    logo={<><b>Drift</b> {version && <span style={{fontSize: '0.8rem', marginLeft: '8px', color: 'grey'}}>{version}</span>}</>}
     extra={<VersionSelector />}
     // ... Your additional navbar options
   />
