@@ -28,6 +28,8 @@ jobs:
       - name: Build and Deploy Versioned Docs
         run: |
           rm -rf ./docs/.next
+          echo "Setting BASE_PATH=/${{ github.ref_name }}"
+          echo "Setting NEXT_PUBLIC_VERSION=${{ github.ref_name }}"
           echo "BASE_PATH=/${{ github.ref_name }}" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
           npm run build
@@ -43,6 +45,8 @@ jobs:
       - name: Build and Deploy Latest Docs
         run: |
           rm -rf ./docs/.next
+          echo "Setting BASE_PATH=/latest"
+          echo "Setting NEXT_PUBLIC_VERSION=${{ github.ref_name }}"
           echo "BASE_PATH=/latest" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
           npm run build
