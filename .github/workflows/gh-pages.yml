@@ -38,35 +38,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-<<<<<<< Updated upstream
           publish_dir: docs/out
-          destination_dir: ${{ github.ref_name }}
-          keep_files: true
           cname: docs.driftee.ai
-
-      - name: Update versions.json and latest redirect
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin gh-pages
-          git checkout gh-pages
-          
-          # Create versions.json if it doesn't exist
-          if [ ! -f "versions.json" ]; then
-            echo '[]' > versions.json
-          fi
-          
-          # Add the new version to the list
-          jq --arg version "${{ github.ref_name }}" '. | . + [$version] | unique | sort_by(.) | reverse' versions.json > versions.json.tmp && mv versions.json.tmp versions.json
-          
-          # Create a redirect from latest to the current version
-          mkdir -p latest
-          echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=./${{ github.ref_name }}/" /></head><body><p>Redirecting to the latest documentation...</p></body></html>' > latest/index.html
-
-          git add versions.json latest/index.html
-          git commit -m "Update versions.json and latest redirect for ${{ github.ref_name }}"
-          git push origin gh-pages
-=======
-          publish_dir: ./docs/out
-          cname: docs.driftee.ai
->>>>>>> Stashed changes
