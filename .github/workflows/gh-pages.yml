@@ -30,16 +30,20 @@ jobs:
         run: npm run build
         working-directory: ./docs
 
+      - name: Create root index.html redirect
+        run: |
+          echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=/latest/" /></head><body><p>Redirecting to the latest documentation...</p></body></html>' > docs/out/index.html
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/out
+          publish_dir: docs/out
           destination_dir: ${{ github.ref_name }}
           keep_files: true
           cname: docs.driftee.ai
 
-      - name: Update versions.json
+      - name: Update versions.json and latest redirect
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -52,9 +56,13 @@ jobs:
           fi
           
           # Add the new version to the list
-          jq --arg version "${{ github.ref_name }}" '. | . + ["latest", $version] | unique' versions.json > versions.json.tmp && mv versions.json.tmp versions.json
+          jq --arg version "${{ github.ref_name }}" '. | . + [$version] | unique | sort_by(.) | reverse' versions.json > versions.json.tmp && mv versions.json.tmp versions.json
           
-          git add versions.json
-          git commit -m "Update versions.json for ${{ github.ref_name }}"
+          # Create a redirect from latest to the current version
+          mkdir -p latest
+          echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=./${{ github.ref_name }}/" /></head><body><p>Redirecting to the latest documentation...</p></body></html>' > latest/index.html
+
+          git add versions.json latest/index.html
+          git commit -m "Update versions.json and latest redirect for ${{ github.ref_name }}"
           git push origin gh-pages
         working-directory: ./docs/out
