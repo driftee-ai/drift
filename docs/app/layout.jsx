@@ -1,5 +1,5 @@
 import { Footer, Layout, Navbar } from "nextra-theme-docs";
-import { Banner, Head } from "nextra/components";
+import { Head } from "nextra/components";
 import { getPageMap } from "nextra/page-map";
 import "nextra-theme-docs/style.css";
 import VersionSelector from "./components/VersionSelector";
@@ -11,10 +11,22 @@ export const metadata = {
 
 const version = process.env.NEXT_PUBLIC_VERSION;
 
-const banner = <Banner storageKey="some-key">Nextra 4.0 is released 🎉</Banner>;
+// const banner = <Banner storageKey="some-key">Drift 1.0 is released 🎉</Banner>;
+const banner = undefined;
 const navbar = (
   <Navbar
-    logo={<><b>Drift</b> {version && <span style={{fontSize: '0.8rem', marginLeft: '8px', color: 'grey'}}>{version}</span>}</>}
+    logo={
+      <>
+        <b>Drift</b>{" "}
+        {version && (
+          <span
+            style={{ fontSize: "0.8rem", marginLeft: "8px", color: "grey" }}
+          >
+            {version}
+          </span>
+        )}
+      </>
+    }
     extra={<VersionSelector />}
     // ... Your additional navbar options
   />
@@ -51,4 +63,3 @@ export default async function RootLayout({ children }) {
     </html>
   );
 }
-
