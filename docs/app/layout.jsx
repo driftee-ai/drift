@@ -9,7 +9,7 @@ export const metadata = {
   // For more information on metadata API, see: https://nextjs.org/docs/app/building-your-application/optimizing/metadata
 };
 
-const version = process.env.NEXT_PUBLIC_VERSION;
+const version = process.env.NEXT_PUBLIC_VERSION ?? "v1.0.0";
 
 // const banner = <Banner storageKey="some-key">Drift 1.0 is released 🎉</Banner>;
 const banner = undefined;
@@ -17,18 +17,9 @@ const navbar = (
   <Navbar
     logo={
       <>
-        <b>Drift</b>{" "}
-        {version && (
-          <span
-            style={{ fontSize: "0.8rem", marginLeft: "8px", color: "grey" }}
-          >
-            {version}
-          </span>
-        )}
+        <b>Drift</b> <VersionSelector version={version} />
       </>
     }
-    extra={<VersionSelector />}
-    // ... Your additional navbar options
   />
 );
 const footer = <Footer>MIT {new Date().getFullYear()} © Nextra.</Footer>;
