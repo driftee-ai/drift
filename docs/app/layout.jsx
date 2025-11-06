@@ -1,3 +1,4 @@
+"use client";
 
 import { Footer, Layout, Navbar } from "nextra-theme-docs";
 import { Banner, Head } from "nextra/components";
