@@ -1,0 +1,26 @@
+# Installation
+
+The `drift` CLI is distributed as a Docker image, making it easy to integrate into your CI/CD pipelines.
+
+## Docker Installation
+
+To install and run the `drift` CLI, follow these steps:
+
+1.  **Pull the Docker Image:**
+    ```bash
+    docker pull ghcr.io/driftee-ai/agent:latest
+    ```
+
+2.  **Set Environment Variables:**
+    The `drift` CLI requires an API key for authentication. Set the `DRIFTEE_API_KEY` environment variable with your key.
+    ```bash
+    export DRIFTEE_API_KEY="your_api_key_here"
+    ```
+    In a CI/CD environment, you should configure this as a secret.
+
+3.  **Run the `drift` Agent:**
+    You can run the `drift` CLI using the Docker image. For example, to run a `check` command:
+    ```bash
+    docker run ghcr.io/driftee-ai/agent:latest drift check
+    ```
+    Ensure that your project's `.drift.yaml` file and relevant code/documentation are accessible within the Docker container (e.g., by mounting volumes).

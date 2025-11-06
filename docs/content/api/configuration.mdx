@@ -1,0 +1,22 @@
+# Configuration
+
+The `drift` tool is configured using a `.drift.yaml` file in the root of your project.
+
+### `version`
+The version of the configuration file format. Currently, this should be `1`.
+
+### `mappings`
+A list of mappings between your code and your documentation. Each mapping has two properties:
+
+- `code`: The path to a source code file.
+- `docs`: The path to a documentation file.
+
+**Example:**
+```yaml
+version: 1
+mappings:
+  - code: src/api/user.go
+    docs: docs/api/users.md
+  - code: src/api/auth.go
+    docs: docs/api/authentication.md
+```

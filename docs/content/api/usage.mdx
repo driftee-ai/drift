@@ -1,0 +1,21 @@
+# Usage
+
+The `drift` CLI has two main commands: `init` and `check`.
+
+## `drift init`
+
+The `init` command creates a scaffold `.drift.yaml` file in your current directory. You can then edit this file to configure your code and documentation mappings.
+
+```bash
+drift init
+```
+
+## `drift check`
+
+The `check` command is the core of the tool. It analyzes the files specified in your `.drift.yaml` and reports any drift between your code and your documentation.
+
+```bash
+drift check
+```
+
+If any drift is detected, the command will exit with a non-zero exit code and print a report of the issues it found.
