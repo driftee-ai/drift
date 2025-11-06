@@ -39,3 +39,4 @@ _pagefind/
 
 node_modules/
 .next/
+docs/out/
