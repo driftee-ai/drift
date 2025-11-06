@@ -1,4 +1,4 @@
-name: Deploy Docs to GitHub Pages
+name: Deploy Docs
 
 on:
   push:
@@ -59,3 +59,4 @@ jobs:
           git add versions.json
           git commit -m "Update versions.json for ${{ github.ref_name }}"
           git push origin gh-pages
+
