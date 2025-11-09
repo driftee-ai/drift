@@ -9,6 +9,8 @@ func New(provider string) (DocAssessor, error) {
 	switch provider {
 	case "gemini":
 		return NewGeminiAssessor()
+	case "openai":
+		return NewOpenAIAssessor()
 	case "dummy":
 		return NewDummyAssessor(), nil
 	default:

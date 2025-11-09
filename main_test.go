@@ -184,3 +184,29 @@ func TestCheckCommand_SubtleDrift(t *testing.T) {
 		t.Errorf("Expected output to contain '%s', but got:\n%s", expectedOutput, string(output))
 	}
 }
+
+func TestCheckCommand_OpenAIProvider_CatchesMissingParam(t *testing.T) {
+	t.Log("Running live OpenAI API test: CatchesMissingParam")
+
+	// Skip this test if OPENAI_API_KEY is not set
+	if os.Getenv("OPENAI_API_KEY") == "" {
+		t.Skip("OPENAI_API_KEY not set, skipping live OpenAI API test")
+	}
+
+	// Run the check command with the config file for the drift example
+	cmd := exec.Command("./"+testBinaryName, "check", "--config", "testdata/e2e/true_positives/openai_missing_param_in_docs/.drift.yaml")
+	cmd.Env = append(os.Environ(), "OPENAI_API_KEY="+os.Getenv("OPENAI_API_KEY"))
+
+	output, err := cmd.CombinedOutput()
+	t.Logf("Command output:\n%s", string(output))
+
+	if err == nil {
+		t.Fatalf("check command should have failed, but it didn't.")
+	}
+
+	// Assert on the output
+	expectedOutput := "Result: Out of Sync"
+	if !strings.Contains(string(output), expectedOutput) {
+		t.Errorf("Expected output to contain '%s', but got:\n%s", expectedOutput, string(output))
+	}
+}
