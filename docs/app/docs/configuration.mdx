@@ -4,7 +4,10 @@ The `.drift.yaml` file defines the rules for checking drift.
 
 ## Top-Level Fields
 
-- **`provider`** (required): The backend provider to use for assessing drift. Currently, only `"gemini"` is supported.
+- **`version`** (required): The version of the configuration file format. Currently, this should be `1`.
+- **`provider`** (required): The backend provider to use for assessing drift. Currently supported providers are:
+    - `"gemini"`: Uses the Google Gemini API. Requires the `GOOGLE_API_KEY` environment variable to be set.
+    - `"openai"`: 🚧 Coming Soon! Support for OpenAI models.
 - **`rules`** (required): A list of rules to check.
 
 ## Rule Fields
@@ -12,6 +15,13 @@ The `.drift.yaml` file defines the rules for checking drift.
 - **`name`** (required): A descriptive name for the rule.
 - **`code`** (required): A list of glob patterns for the code files.
 - **`docs`** (required): A list of glob patterns for the documentation files.
+
+### Glob Patterns
+
+Glob patterns are used to specify file paths using wildcards. For example:
+- `*.go`: Matches all Go files in the current directory.
+- `src/**/*.go`: Matches all Go files in the `src` directory and its subdirectories.
+- `docs/api/*.md`: Matches all Markdown files in the `docs/api` directory.
 
 ## Example `.drift.yaml`
 
