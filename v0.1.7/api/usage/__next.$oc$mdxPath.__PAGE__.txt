@@ -1,0 +1,74 @@
+1:"$Sreact.fragment"
+2:I[55169,["/v0.1.7/_next/static/chunks/ff1a16fafef87110.js","/v0.1.7/_next/static/chunks/97901a3a3c0de06c.js","/v0.1.7/_next/static/chunks/5d6617491883d776.js","/v0.1.7/_next/static/chunks/533ab64851a13d9c.js"],"TOCProvider"]
+3:I[769,["/v0.1.7/_next/static/chunks/ff1a16fafef87110.js","/v0.1.7/_next/static/chunks/97901a3a3c0de06c.js","/v0.1.7/_next/static/chunks/5d6617491883d776.js","/v0.1.7/_next/static/chunks/533ab64851a13d9c.js"],"Sidebar"]
+4:I[47486,["/v0.1.7/_next/static/chunks/ff1a16fafef87110.js","/v0.1.7/_next/static/chunks/97901a3a3c0de06c.js","/v0.1.7/_next/static/chunks/5d6617491883d776.js","/v0.1.7/_next/static/chunks/533ab64851a13d9c.js"],"ClientWrapper"]
+6:I[63894,["/v0.1.7/_next/static/chunks/ff1a16fafef87110.js","/v0.1.7/_next/static/chunks/97901a3a3c0de06c.js","/v0.1.7/_next/static/chunks/5d6617491883d776.js","/v0.1.7/_next/static/chunks/533ab64851a13d9c.js"],"HeadingAnchor"]
+17:I[83987,["/v0.1.7/_next/static/chunks/ff1a16fafef87110.js","/v0.1.7/_next/static/chunks/97901a3a3c0de06c.js","/v0.1.7/_next/static/chunks/5d6617491883d776.js","/v0.1.7/_next/static/chunks/533ab64851a13d9c.js"],"ToggleWordWrapButton"]
+18:I[22016,["/v0.1.7/_next/static/chunks/ff1a16fafef87110.js","/v0.1.7/_next/static/chunks/97901a3a3c0de06c.js","/v0.1.7/_next/static/chunks/5d6617491883d776.js","/v0.1.7/_next/static/chunks/533ab64851a13d9c.js"],""]
+19:I[97367,["/v0.1.7/_next/static/chunks/ff1a16fafef87110.js","/v0.1.7/_next/static/chunks/247eb132b7f7b574.js"],"OutletBoundary"]
+1a:"$Sreact.suspense"
+5:T6c2,# Usage
+
+The `drift` CLI has two main commands: `init` and `check`.
+
+## `drift init`
+
+This command initializes a new project by creating a `.drift.yaml` configuration file in the current directory.
+
+```bash
+drift init
+```
+
+This will create a `.drift.yaml` file with some example configuration to get you started.
+
+## `drift check`
+
+This command checks for drift between your code and documentation based on the rules in your `.drift.yaml` file.
+
+To check all files:
+
+```bash
+drift check
+```
+
+You can also use a custom configuration file with the `--config` flag:
+
+```bash
+drift check --config /path/to/your/config.yaml
+```
+
+The `drift check` command evaluates your code and documentation against the `rules` defined in your `.drift.yaml` configuration file. Each rule specifies a set of code files and corresponding documentation files to be assessed for consistency.
+
+If `drift` detects any discrepancies, it will report them and exit with a non-zero exit code, making it easy to integrate into your CI/CD pipeline. The assessment is performed by an AI model (e.g., Gemini, OpenAI) which analyzes the content and provides a reason for any detected drift.
+
+### Example Output
+
+Here's an example of what you might see if drift is detected:
+
+```
+Loaded 1 rules from .drift.yaml (provider: gemini)
+  - Rule: User API Documentation
+    Found 1 code files, total size: 1234 bytes
+    Found 1 doc files, total size: 567 bytes
+    Result: Out of Sync (Reason: The `GetUser` function in `user.go` now includes a `context.Context` parameter, which is not reflected in the `users.md` documentation.)
+drift detected
+```
+
+For more details on configuring your `rules` and LLM providers, refer to the [Configuration Guide](./configuration.mdx).0:{"buildId":"fu6xblhvCN6AAK73oLgsY","rsc":["$","$1","c",{"children":[["$","div",null,{"className":"x:mx-auto x:flex x:max-w-(--nextra-content-width)","children":["$","$L2",null,{"value":[{"value":[["$","$1",".0",{"children":[["$","code",".0",{"className":"nextra-code","dir":"ltr","children":"drift init"}]]}]],"id":"drift-init","depth":2},{"value":[["$","$1",".0",{"children":[["$","code",".0",{"className":"nextra-code","dir":"ltr","children":"drift check"}]]}]],"id":"drift-check","depth":2},{"value":"Example Output","id":"example-output","depth":3}],"children":[["$","$L3",null,{}],["$","$L4",null,{"metadata":{"title":"Usage","filePath":"content/api/usage.mdx","timestamp":1762672896000},"sourceCode":"$5","children":[["$","div",null,{"id":"nextra-skip-nav"}],["$","main",null,{"data-pagefind-body":true,"children":[["$","h1",null,{"className":"x:tracking-tight x:text-slate-900 x:dark:text-slate-100 x:font-bold x:mt-2 x:text-4xl","children":["Usage","$undefined"]}],"\n",["$","p",null,{"className":"x:not-first:mt-[1.25em] x:leading-7","children":["The ",["$","code",null,{"className":"nextra-code","dir":"ltr","children":"drift"}]," CLI has two main commands: ",["$","code",null,{"className":"nextra-code","dir":"ltr","children":"init"}]," and ",["$","code",null,{"className":"nextra-code","dir":"ltr","children":"check"}],"."]}],"\n",["$","h2",null,{"id":"drift-init","className":"x:tracking-tight x:text-slate-900 x:dark:text-slate-100 x:font-semibold x:target:animate-[fade-in_1.5s] x:mt-10 x:border-b x:pb-1 x:text-3xl nextra-border","children":[["$","code",null,{"className":"nextra-code","dir":"ltr","children":"drift init"}],["$","$L6",null,{"id":"drift-init"}]]}],"\n",["$","p",null,{"className":"x:not-first:mt-[1.25em] x:leading-7","children":["This command initializes a new project by creating a ",["$","code",null,{"className":"nextra-code","dir":"ltr","children":".drift.yaml"}]," configuration file in the current directory."]}],"\n",["$","div",null,{"data-pagefind-ignore":"all","className":"nextra-code x:relative x:not-first:mt-[1.25em]","children":["$undefined",["$","pre",null,{"className":"x:group x:focus-visible:nextra-focus x:overflow-x-auto x:subpixel-antialiased x:text-[.9em] x:bg-white x:dark:bg-black x:py-4 x:ring-1 x:ring-inset x:ring-gray-300 x:dark:ring-neutral-700 x:contrast-more:ring-gray-900 x:contrast-more:dark:ring-gray-50 x:contrast-more:contrast-150 x:rounded-md not-prose","tabIndex":"0","children":["$L7","$L8"]}]]}],"\n","$L9","\n","$La","\n","$Lb","\n","$Lc","\n","$Ld","\n","$Le","\n","$Lf","\n","$L10","\n","$L11","\n","$L12","\n","$L13","\n","$L14","\n","$L15"]}]]}]]}]}],null,"$L16"]}],"loading":null,"isPartial":false}
+7:["$","div",null,{"className":"x:group-hover:opacity-100 x:group-focus:opacity-100 x:opacity-0 x:transition x:focus-within:opacity-100 x:flex x:gap-1 x:absolute x:right-4 x:top-2","children":[["$","$L17",null,{"children":["$","svg",null,{"viewBox":"0 0 24 24","fill":"currentColor","height":"1em","children":["$","path",null,{"d":"M4 19h6v-2H4v2zM20 5H4v2h16V5zm-3 6H4v2h13.25c1.1 0 2 .9 2 2s-.9 2-2 2H15v-2l-3 3l3 3v-2h2c2.21 0 4-1.79 4-4s-1.79-4-4-4z"}]}]}],false]}]
+8:["$","code",null,{"className":"nextra-code","dir":"ltr","children":["$","span",null,{"children":[["$","span",null,{"style":{"--shiki-light":"#6F42C1","--shiki-dark":"#B392F0"},"children":"drift"}],["$","span",null,{"style":{"--shiki-light":"#032F62","--shiki-dark":"#9ECBFF"},"children":" init"}]]}]}]
+9:["$","p",null,{"className":"x:not-first:mt-[1.25em] x:leading-7","children":["This will create a ",["$","code",null,{"className":"nextra-code","dir":"ltr","children":".drift.yaml"}]," file with some example configuration to get you started."]}]
+a:["$","h2",null,{"id":"drift-check","className":"x:tracking-tight x:text-slate-900 x:dark:text-slate-100 x:font-semibold x:target:animate-[fade-in_1.5s] x:mt-10 x:border-b x:pb-1 x:text-3xl nextra-border","children":[["$","code",null,{"className":"nextra-code","dir":"ltr","children":"drift check"}],["$","$L6",null,{"id":"drift-check"}]]}]
+b:["$","p",null,{"className":"x:not-first:mt-[1.25em] x:leading-7","children":["This command checks for drift between your code and documentation based on the rules in your ",["$","code",null,{"className":"nextra-code","dir":"ltr","children":".drift.yaml"}]," file."]}]
+c:["$","p",null,{"className":"x:not-first:mt-[1.25em] x:leading-7","children":"To check all files:"}]
+d:["$","div",null,{"data-pagefind-ignore":"all","className":"nextra-code x:relative x:not-first:mt-[1.25em]","children":["$undefined",["$","pre",null,{"className":"x:group x:focus-visible:nextra-focus x:overflow-x-auto x:subpixel-antialiased x:text-[.9em] x:bg-white x:dark:bg-black x:py-4 x:ring-1 x:ring-inset x:ring-gray-300 x:dark:ring-neutral-700 x:contrast-more:ring-gray-900 x:contrast-more:dark:ring-gray-50 x:contrast-more:contrast-150 x:rounded-md not-prose","tabIndex":"0","children":[["$","div",null,{"className":"x:group-hover:opacity-100 x:group-focus:opacity-100 x:opacity-0 x:transition x:focus-within:opacity-100 x:flex x:gap-1 x:absolute x:right-4 x:top-2","children":[["$","$L17",null,{"children":["$","svg",null,{"viewBox":"0 0 24 24","fill":"currentColor","height":"1em","children":["$","path",null,{"d":"M4 19h6v-2H4v2zM20 5H4v2h16V5zm-3 6H4v2h13.25c1.1 0 2 .9 2 2s-.9 2-2 2H15v-2l-3 3l3 3v-2h2c2.21 0 4-1.79 4-4s-1.79-4-4-4z"}]}]}],false]}],["$","code",null,{"className":"nextra-code","dir":"ltr","children":["$","span",null,{"children":[["$","span",null,{"style":{"--shiki-light":"#6F42C1","--shiki-dark":"#B392F0"},"children":"drift"}],["$","span",null,{"style":{"--shiki-light":"#032F62","--shiki-dark":"#9ECBFF"},"children":" check"}]]}]}]]}]]}]
+e:["$","p",null,{"className":"x:not-first:mt-[1.25em] x:leading-7","children":["You can also use a custom configuration file with the ",["$","code",null,{"className":"nextra-code","dir":"ltr","children":"--config"}]," flag:"]}]
+f:["$","div",null,{"data-pagefind-ignore":"all","className":"nextra-code x:relative x:not-first:mt-[1.25em]","children":["$undefined",["$","pre",null,{"className":"x:group x:focus-visible:nextra-focus x:overflow-x-auto x:subpixel-antialiased x:text-[.9em] x:bg-white x:dark:bg-black x:py-4 x:ring-1 x:ring-inset x:ring-gray-300 x:dark:ring-neutral-700 x:contrast-more:ring-gray-900 x:contrast-more:dark:ring-gray-50 x:contrast-more:contrast-150 x:rounded-md not-prose","tabIndex":"0","children":[["$","div",null,{"className":"x:group-hover:opacity-100 x:group-focus:opacity-100 x:opacity-0 x:transition x:focus-within:opacity-100 x:flex x:gap-1 x:absolute x:right-4 x:top-2","children":[["$","$L17",null,{"children":["$","svg",null,{"viewBox":"0 0 24 24","fill":"currentColor","height":"1em","children":["$","path",null,{"d":"M4 19h6v-2H4v2zM20 5H4v2h16V5zm-3 6H4v2h13.25c1.1 0 2 .9 2 2s-.9 2-2 2H15v-2l-3 3l3 3v-2h2c2.21 0 4-1.79 4-4s-1.79-4-4-4z"}]}]}],false]}],["$","code",null,{"className":"nextra-code","dir":"ltr","children":["$","span",null,{"children":[["$","span",null,{"style":{"--shiki-light":"#6F42C1","--shiki-dark":"#B392F0"},"children":"drift"}],["$","span",null,{"style":{"--shiki-light":"#032F62","--shiki-dark":"#9ECBFF"},"children":" check"}],["$","span",null,{"style":{"--shiki-light":"#005CC5","--shiki-dark":"#79B8FF"},"children":" --config"}],["$","span",null,{"style":{"--shiki-light":"#032F62","--shiki-dark":"#9ECBFF"},"children":" /path/to/your/config.yaml"}]]}]}]]}]]}]
+10:["$","p",null,{"className":"x:not-first:mt-[1.25em] x:leading-7","children":["The ",["$","code",null,{"className":"nextra-code","dir":"ltr","children":"drift check"}]," command evaluates your code and documentation against the ",["$","code",null,{"className":"nextra-code","dir":"ltr","children":"rules"}]," defined in your ",["$","code",null,{"className":"nextra-code","dir":"ltr","children":".drift.yaml"}]," configuration file. Each rule specifies a set of code files and corresponding documentation files to be assessed for consistency."]}]
+11:["$","p",null,{"className":"x:not-first:mt-[1.25em] x:leading-7","children":["If ",["$","code",null,{"className":"nextra-code","dir":"ltr","children":"drift"}]," detects any discrepancies, it will report them and exit with a non-zero exit code, making it easy to integrate into your CI/CD pipeline. The assessment is performed by an AI model (e.g., Gemini, OpenAI) which analyzes the content and provides a reason for any detected drift."]}]
+12:["$","h3",null,{"id":"example-output","className":"x:tracking-tight x:text-slate-900 x:dark:text-slate-100 x:font-semibold x:target:animate-[fade-in_1.5s] x:mt-8 x:text-2xl","children":["Example Output",["$","$L6",null,{"id":"example-output"}]]}]
+13:["$","p",null,{"className":"x:not-first:mt-[1.25em] x:leading-7","children":"Here’s an example of what you might see if drift is detected:"}]
+14:["$","div",null,{"data-pagefind-ignore":"all","className":"nextra-code x:relative x:not-first:mt-[1.25em]","children":["$undefined",["$","pre",null,{"className":"x:group x:focus-visible:nextra-focus x:overflow-x-auto x:subpixel-antialiased x:text-[.9em] x:bg-white x:dark:bg-black x:py-4 x:ring-1 x:ring-inset x:ring-gray-300 x:dark:ring-neutral-700 x:contrast-more:ring-gray-900 x:contrast-more:dark:ring-gray-50 x:contrast-more:contrast-150 x:rounded-md not-prose","tabIndex":"0","children":[["$","div",null,{"className":"x:group-hover:opacity-100 x:group-focus:opacity-100 x:opacity-0 x:transition x:focus-within:opacity-100 x:flex x:gap-1 x:absolute x:right-4 x:top-2","children":[["$","$L17",null,{"children":["$","svg",null,{"viewBox":"0 0 24 24","fill":"currentColor","height":"1em","children":["$","path",null,{"d":"M4 19h6v-2H4v2zM20 5H4v2h16V5zm-3 6H4v2h13.25c1.1 0 2 .9 2 2s-.9 2-2 2H15v-2l-3 3l3 3v-2h2c2.21 0 4-1.79 4-4s-1.79-4-4-4z"}]}]}],false]}],["$","code",null,{"className":"nextra-code","dir":"ltr","children":[["$","span",null,{"children":["$","span",null,{"children":"Loaded 1 rules from .drift.yaml (provider: gemini)"}]}],"\n",["$","span",null,{"children":["$","span",null,{"children":"  - Rule: User API Documentation"}]}],"\n",["$","span",null,{"children":["$","span",null,{"children":"    Found 1 code files, total size: 1234 bytes"}]}],"\n",["$","span",null,{"children":["$","span",null,{"children":"    Found 1 doc files, total size: 567 bytes"}]}],"\n",["$","span",null,{"children":["$","span",null,{"children":"    Result: Out of Sync (Reason: The `GetUser` function in `user.go` now includes a `context.Context` parameter, which is not reflected in the `users.md` documentation.)"}]}],"\n",["$","span",null,{"children":["$","span",null,{"children":"drift detected"}]}]]}]]}]]}]
+15:["$","p",null,{"className":"x:not-first:mt-[1.25em] x:leading-7","children":["For more details on configuring your ",["$","code",null,{"className":"nextra-code","dir":"ltr","children":"rules"}]," and LLM providers, refer to the ",["$","$L18",null,{"href":"./configuration","className":"x:focus-visible:nextra-focus x:text-primary-600 x:underline x:hover:no-underline x:decoration-from-font x:[text-underline-position:from-font]","children":"Configuration Guide"}],"."]}]
+16:["$","$L19",null,{"children":["$","$1a",null,{"name":"Next.MetadataOutlet","children":"$@1b"}]}]
+1b:null
