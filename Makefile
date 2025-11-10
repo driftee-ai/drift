@@ -1,10 +1,13 @@
-.PHONY: build test release dist clean-dist lint
+.PHONY: build test release dist clean-dist lint integration-test
 
 build:
 	go build -o drift .
 
 test:
 	go test ./...
+
+integration-test:
+	go test -v -tags=integration ./...
 
 release: test
 	@if [ -z "$(VERSION)" ]; then \

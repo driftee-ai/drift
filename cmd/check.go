@@ -38,13 +38,17 @@ var checkCmd = &cobra.Command{
 				allInSync = false
 				continue
 			}
-			codeContent, err := files.ReadAndConcatenate(codeFiles)
+			codeContents, err := files.ReadFiles(codeFiles)
 			if err != nil {
 				log.Printf("Error reading code content for rule '%s': %v", rule.Name, err)
 				allInSync = false
 				continue
 			}
-			fmt.Printf("    Found %d code files, total size: %d bytes\n", len(codeFiles), len(codeContent))
+			totalSize := 0
+			for _, content := range codeContents {
+				totalSize += len(content)
+			}
+			fmt.Printf("    Found %d code files, total size: %d bytes\n", len(codeFiles), totalSize)
 
 			// Find and read docs files
 			docFiles, err := files.FindFiles(rule.Docs)
@@ -62,7 +66,7 @@ var checkCmd = &cobra.Command{
 			fmt.Printf("    Found %d doc files, total size: %d bytes\n", len(docFiles), len(docContent))
 
 			// Assess the drift
-			result, err := docAssessor.Assess(docContent, codeContent)
+			result, err := docAssessor.Assess(docContent, codeContents)
 			if err != nil {
 				log.Printf("Error assessing drift for rule '%s': %v", rule.Name, err)
 				allInSync = false // Consider assessment error as out of sync

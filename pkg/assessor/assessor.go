@@ -8,7 +8,7 @@ type AssessmentResult struct {
 
 // DocAssessor is the interface for assessing drift between code and documentation.
 type DocAssessor interface {
-	Assess(docContent string, codeContents string) (*AssessmentResult, error)
+	Assess(docContent string, codeContents map[string]string) (*AssessmentResult, error)
 }
 
 // DummyAssessor is a mock assessor for testing purposes.
@@ -20,7 +20,7 @@ func NewDummyAssessor() *DummyAssessor {
 }
 
 // Assess returns a hardcoded assessment result.
-func (a *DummyAssessor) Assess(docContent string, codeContents string) (*AssessmentResult, error) {
+func (a *DummyAssessor) Assess(docContent string, codeContents map[string]string) (*AssessmentResult, error) {
 	return &AssessmentResult{
 		IsInSync: true,
 		Reason:   "This is a dummy assessment.",

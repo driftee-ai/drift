@@ -35,7 +35,7 @@ func NewGeminiAssessor() (*GeminiAssessor, error) {
 }
 
 // Assess uses the Gemini API to assess drift between code and documentation.
-func (a *GeminiAssessor) Assess(docContent string, codeContent string) (*AssessmentResult, error) {
+func (a *GeminiAssessor) Assess(docContent string, codeContents map[string]string) (*AssessmentResult, error) {
 	ctx := context.Background()
 
 	// Define the response schema
@@ -51,6 +51,11 @@ func (a *GeminiAssessor) Assess(docContent string, codeContent string) (*Assessm
 	// Set the response mime type and schema
 	a.client.ResponseMIMEType = "application/json"
 	a.client.ResponseSchema = schema
+
+	codeStr := ""
+	for path, content := range codeContents {
+		codeStr += fmt.Sprintf("File: %s\n---\n%s\n---\n", path, content)
+	}
 
 	prompt := fmt.Sprintf(`
 You are a senior software engineer reviewing documentation for a codebase.
@@ -68,7 +73,7 @@ And here is the code:
 
 Is the documentation in sync with the code?
 Please provide your answer in JSON format, with a boolean "is_in_sync" field and a "reason" field.
-`, docContent, codeContent)
+`, docContent, codeStr)
 
 	resp, err := a.client.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {

@@ -1,8 +1,0 @@
-version: 1
-provider: openai
-rules:
-  - name: "Missing Parameter in Docs (OpenAI)"
-    code:
-      - "testdata/e2e/true_positives/openai_missing_param_in_docs/code.go"
-    docs:
-      - "testdata/e2e/true_positives/openai_missing_param_in_docs/docs.md"
