@@ -1,4 +1,7 @@
-.PHONY: build test release dist clean-dist lint integration-test
+.PHONY: build test release dist clean-dist lint integration-test install
+
+install:
+	go build -o /usr/local/bin/drift .
 
 build:
 	go build -o drift .
