@@ -23,5 +23,5 @@ jobs:
       - name: Run live tests
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: go test -count=1 .
+        run: go test -tags=integration -count=1 ./...
 
