@@ -1,4 +1,4 @@
-name: Unit Tests
+name: Drift Check
 
 on:
   push:
@@ -11,7 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Drift Check
-        uses: ./actions/drift-check
-        with:
-          gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+      - name: Run Driftee Agent
+        env:
+          DRIFTEE_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          docker pull ghcr.io/driftee-ai/agent:latest
+          docker run ghcr.io/driftee-ai/agent:latest drift check
