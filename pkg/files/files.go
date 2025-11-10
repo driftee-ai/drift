@@ -62,3 +62,16 @@ func ReadAndConcatenate(paths []string) (string, error) {
 	}
 	return builder.String(), nil
 }
+
+// ReadFiles takes a list of file paths and returns a map of file paths to their contents.
+func ReadFiles(paths []string) (map[string]string, error) {
+	contents := make(map[string]string)
+	for _, path := range paths {
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read file %s: %w", path, err)
+		}
+		contents[path] = string(content)
+	}
+	return contents, nil
+}

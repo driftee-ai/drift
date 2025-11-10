@@ -1,10 +1,20 @@
 export default {
   index: {
-    title: "Home",
-    type: "page",
+    title: "Introduction",
   },
-  api: {
-    title: "API",
-    type: "page",
+  installation: {
+    title: "Installation",
+  },
+  configuration: {
+    title: "Configuration",
+  },
+  providers: {
+    title: "Providers",
+  },
+  contributing: {
+    title: "Contributing",
+  },
+  usage: {
+    title: "Usage",
   },
 };

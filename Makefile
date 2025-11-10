@@ -1,10 +1,16 @@
-.PHONY: build test release dist clean-dist lint
+.PHONY: build test release dist clean-dist lint integration-test install
+
+install:
+	go build -o /usr/local/bin/drift .
 
 build:
 	go build -o drift .
 
 test:
-	go test ./...
+	go test -count=1 ./...
+
+integration-test:
+	go test -v -tags=integration -count=1 ./...
 
 release: test
 	@if [ -z "$(VERSION)" ]; then \

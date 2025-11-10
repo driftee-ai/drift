@@ -5,6 +5,7 @@ go 1.25.3
 require (
 	github.com/bmatcuk/doublestar/v4 v4.9.1
 	github.com/google/generative-ai-go v0.20.1
+	github.com/sashabaranov/go-openai v1.41.2
 	github.com/spf13/cobra v1.10.1
 	google.golang.org/api v0.197.0
 	gopkg.in/yaml.v3 v3.0.1
