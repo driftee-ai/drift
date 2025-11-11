@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/driftee-ai/drift/pkg/assessor"
 	"github.com/driftee-ai/drift/pkg/config"
@@ -13,17 +14,17 @@ import (
 var checkCmd = &cobra.Command{
 	Use:   "check",
 	Short: "Checks for drift between your code and your documentation.",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		configFile, _ := cmd.Flags().GetString("config")
 
 		cfg, err := config.Load(configFile)
 		if err != nil {
-			return fmt.Errorf("failed to load config file %s: %w", configFile, err)
+			log.Fatalf("failed to load config file %s: %v", configFile, err)
 		}
 
 		docAssessor, err := assessor.New(cfg.Provider)
 		if err != nil {
-			return fmt.Errorf("failed to create assessor: %w", err)
+			log.Fatalf("failed to create assessor: %v", err)
 		}
 
 		fmt.Printf("Loaded %d rules from %s (provider: %s)\n", len(cfg.Rules), configFile, cfg.Provider)
@@ -82,9 +83,9 @@ var checkCmd = &cobra.Command{
 		}
 
 		if !allInSync {
-			return fmt.Errorf("drift detected") // Return an error
+			fmt.Println("Drift detected.")
+			os.Exit(1)
 		}
-		return nil
 	},
 }
 

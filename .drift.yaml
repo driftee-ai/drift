@@ -3,8 +3,7 @@ provider: gemini
 rules:
   - name: "CLI Usage Documentation"
     code:
-      - "cmd/root.go"
-      - "cmd/check.go"
-      - "cmd/init.go"
+      - "cmd/**.go"
     docs:
       - "README.md"
+      - "docs/**/*.mdx"
