@@ -52,6 +52,10 @@ drift check
 drift check --config /path/to/your/config.yaml
 ```
 
+**Check only changed files:**
+
+For faster checks, especially in CI/CD, use the `--changed-files` flag to check only files that have been modified. See the [full documentation](https://driftee-ai.github.io/drift) for more details and CI/CD examples.
+
 ## Configuration
 
 The `.drift.yaml` file defines the rules for checking drift.

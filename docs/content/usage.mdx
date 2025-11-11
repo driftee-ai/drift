@@ -29,6 +29,25 @@ You can also use a custom configuration file with the `--config` flag:
 drift check --config /path/to/your/config.yaml
 ```
 
+### Checking Changed Files
+
+For faster checks, especially in a CI/CD environment, you can check only the files that have been modified. The `--changed-files` flag (or `-f`) allows you to pass a list of file paths to check against.
+
+`drift` will then compare this list of files against the glob patterns in your rules and only run the assessments for the rules that are "triggered" by a matching file.
+
+```bash
+# Pass a specific list of files
+drift check --changed-files "pkg/server/main.go,docs/api/server.md"
+```
+
+This is most powerful when combined with `git` to automatically check files in a pull request:
+
+```bash
+# Get a list of changed files from git and pass them to drift
+CHANGED_FILES=$(git diff --name-only origin/main...HEAD | tr '\n' ',')
+drift check --changed-files "$CHANGED_FILES"
+```
+
 The `drift check` command evaluates your code and documentation against the `rules` defined in your `.drift.yaml` configuration file. Each rule specifies a set of code files and corresponding documentation files to be assessed for consistency.
 
 If `drift` detects any discrepancies, it will report them and exit with a non-zero exit code, making it easy to integrate into your CI/CD pipeline. The assessment is performed by an AI model (e.g., Gemini, OpenAI) which analyzes the content and provides a reason for any detected drift.

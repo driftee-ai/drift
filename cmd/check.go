@@ -8,6 +8,7 @@ import (
 	"github.com/driftee-ai/drift/pkg/assessor"
 	"github.com/driftee-ai/drift/pkg/config"
 	"github.com/driftee-ai/drift/pkg/files"
+	"github.com/driftee-ai/drift/pkg/rules"
 	"github.com/spf13/cobra"
 )
 
@@ -16,6 +17,7 @@ var checkCmd = &cobra.Command{
 	Short: "Checks for drift between your code and your documentation.",
 	Run: func(cmd *cobra.Command, args []string) {
 		configFile, _ := cmd.Flags().GetString("config")
+		changedFiles, _ := cmd.Flags().GetStringSlice("changed-files")
 
 		cfg, err := config.Load(configFile)
 		if err != nil {
@@ -27,9 +29,17 @@ var checkCmd = &cobra.Command{
 			log.Fatalf("failed to create assessor: %v", err)
 		}
 
+		triggeredRules, err := rules.FilterTriggeredRules(cfg.Rules, changedFiles)
+		if err != nil {
+			log.Fatalf("failed to filter rules based on changed files: %v", err)
+		}
+
 		fmt.Printf("Loaded %d rules from %s (provider: %s)\n", len(cfg.Rules), configFile, cfg.Provider)
+		if len(changedFiles) > 0 {
+			fmt.Printf("Filtering rules based on %d changed files. %d rules were triggered.\n", len(changedFiles), len(triggeredRules))
+		}
 		allInSync := true
-		for _, rule := range cfg.Rules {
+		for _, rule := range triggeredRules {
 			fmt.Printf("  - Rule: %s\n", rule.Name)
 
 			// Find and read code files
@@ -92,4 +102,5 @@ var checkCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(checkCmd)
 	checkCmd.Flags().StringP("config", "c", ".drift.yaml", "Path to the drift configuration file")
+	checkCmd.Flags().StringSliceP("changed-files", "f", []string{}, "List of changed files to check for drift")
 }
