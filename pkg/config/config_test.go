@@ -48,7 +48,6 @@ rules:
 	actualContent = strings.TrimSpace(actualContent)
 	expectedContent = strings.TrimSpace(expectedContent)
 
-
 	if actualContent != expectedContent {
 		t.Errorf("Generated scaffold content mismatch.\nExpected:\n%s\nActual:\n%s", expectedContent, actualContent)
 	}

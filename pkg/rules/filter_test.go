@@ -28,10 +28,10 @@ var mockRules = []config.Rule{
 
 func TestFilterTriggeredRules(t *testing.T) {
 	tests := []struct {
-		name           string
-		changedFiles   []string
-		expectedRules  []string // Names of rules we expect to be triggered
-		expectErr      bool
+		name          string
+		changedFiles  []string
+		expectedRules []string // Names of rules we expect to be triggered
+		expectErr     bool
 	}{
 		{
 			name:          "No changed files should return all rules",
@@ -82,8 +82,8 @@ func TestFilterTriggeredRules(t *testing.T) {
 			expectErr:     false,
 		},
 		{
-			name:          "Invalid glob pattern should return an error",
-			changedFiles:  []string{"test"},
+			name:         "Invalid glob pattern should return an error",
+			changedFiles: []string{"test"},
 			// Temporarily modify a rule to have a bad pattern
 			// This is tested implicitly by how filepath.Match works, but good to be aware.
 			// For this test, we assume the globs in mockRules are valid.
@@ -97,17 +97,17 @@ func TestFilterTriggeredRules(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			triggeredRules, err := FilterTriggeredRules(mockRules, tt.changedFiles)
-			
+
 			if tt.expectErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				
+
 				var triggeredRuleNames []string
 				for _, rule := range triggeredRules {
 					triggeredRuleNames = append(triggeredRuleNames, rule.Name)
 				}
-				
+
 				assert.ElementsMatch(t, tt.expectedRules, triggeredRuleNames, "The triggered rules did not match the expected rules.")
 			}
 		})

@@ -1,4 +1,4 @@
-.PHONY: build test release dist clean-dist lint integration-test install
+.PHONY: build test release dist clean-dist lint integration-test install lint-fix
 
 install:
 	go build -o /usr/local/bin/drift .
@@ -59,3 +59,6 @@ clean-dist:
 
 lint:
 	$(shell go env GOPATH)/bin/golangci-lint run ./...
+
+lint-fix:
+	$(shell go env GOPATH)/bin/golangci-lint run --fix ./...
