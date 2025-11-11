@@ -1,5 +1,7 @@
 # Drift
 
+[**Full Documentation**](https://driftee-ai.github.io/drift)
+
 Drift is a command-line tool to detect and prevent drift between your code and your documentation.
 It uses large language models to assess if your documentation accurately reflects your code.
 
@@ -88,6 +90,14 @@ To use the Gemini provider, you need to set the `GEMINI_API_KEY` environment var
 
 ```bash
 export GEMINI_API_KEY="your-api-key"
+```
+
+### OpenAI
+
+To use the OpenAI provider, you need to set the `OPENAI_API_KEY` environment variable to your OpenAI API key.
+
+```bash
+export OPENAI_API_KEY="your-api-key"
 ```
 
 ## Community & Support
