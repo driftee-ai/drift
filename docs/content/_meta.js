@@ -11,10 +11,13 @@ export default {
   providers: {
     title: "Providers",
   },
+  "ci-cd": {
+    title: "CI/CD Integration",
+  },
+  api: {
+    title: "API Reference",
+  },
   contributing: {
     title: "Contributing",
-  },
-  usage: {
-    title: "Usage",
   },
 };

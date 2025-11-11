@@ -1,0 +1,11 @@
+# CI/CD Integration
+
+`drift` is designed to be a part of your CI/CD pipeline, helping you catch documentation drift before it gets merged.
+
+### GitHub Action
+
+We provide an official [GitHub Action](https://github.com/driftee-ai/drift/tree/main/actions/drift-check) to make this integration seamless.
+
+By adding a simple step to your workflow, you can automatically run `drift check` on every pull request. The action will fail if drift is detected, preventing the pull request from being merged until the documentation is back in sync.
+
+For detailed setup instructions, please see the [action's README](https://github.com/driftee-ai/drift/tree/main/actions/drift-check).

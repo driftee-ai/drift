@@ -1,19 +1,4 @@
-
-# Usage
-
-The `drift` CLI has two main commands: `init` and `check`.
-
-## `drift init`
-
-This command initializes a new project by creating a `.drift.yaml` configuration file in the current directory.
-
-```bash
-drift init
-```
-
-This will create a `.drift.yaml` file with some example configuration to get you started.
-
-## `drift check`
+# `drift check`
 
 This command checks for drift between your code and documentation based on the rules in your `.drift.yaml` file.
 
@@ -65,16 +50,5 @@ Loaded 1 rules from .drift.yaml (provider: gemini)
 drift detected
 ```
 
-For more details on configuring your `rules` and LLM providers, refer to the [Configuration Guide](./configuration.mdx).
+For more details on configuring your `rules` and LLM providers, refer to the [Configuration Guide](../../configuration.mdx).
 
-## CI/CD Integration
-
-`drift` is designed to be a part of your CI/CD pipeline, helping you catch documentation drift before it gets merged.
-
-### GitHub Action
-
-We provide an official [GitHub Action](https://github.com/driftee-ai/drift/tree/main/actions/drift-check) to make this integration seamless.
-
-By adding a simple step to your workflow, you can automatically run `drift check` on every pull request. The action will fail if drift is detected, preventing the pull request from being merged until the documentation is back in sync.
-
-For detailed setup instructions, please see the [action's README](https://github.com/driftee-ai/drift/tree/main/actions/drift-check).
