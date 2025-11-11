@@ -21,3 +21,7 @@ var rootCmd = &cobra.Command{
 func Execute() error {
 	return rootCmd.Execute()
 }
+
+func init() {
+	rootCmd.Flags().BoolP("version", "v", false, "print version and exit")
+}
