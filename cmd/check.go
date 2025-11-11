@@ -75,7 +75,7 @@ var checkCmd = &cobra.Command{
 			}
 
 			if result.IsInSync {
-				fmt.Printf("    Result: In Sync (%s)\n", result.Reason)
+				fmt.Printf("    Result: In Sync\n")
 			} else {
 				fmt.Printf("    Result: Out of Sync (%s)\n", result.Reason)
 				allInSync = false // Set flag to false

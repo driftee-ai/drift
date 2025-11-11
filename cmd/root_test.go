@@ -35,7 +35,7 @@ func TestRootCmd(t *testing.T) {
 	os.Stdout = old // restoring the real stdout
 	out := <-outC
 
-	if !strings.Contains(out, "Hello from drift!") {
-		t.Errorf("Expected 'Hello from drift!' but got '%s'", out)
+	if !strings.Contains(out, "Usage:") {
+		t.Errorf("Expected 'Usage:' but got '%s'", out)
 	}
 }

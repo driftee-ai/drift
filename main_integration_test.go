@@ -40,7 +40,7 @@ func TestCheckCommand_DummyProvider(t *testing.T) {
 	}
 
 	// Assert on the output
-	expectedOutput := "Result: In Sync (This is a dummy assessment.)"
+	expectedOutput := "Result: In Sync"
 	if !strings.Contains(string(output), expectedOutput) {
 		t.Errorf("Expected output to contain '%s', but got:\n%s", expectedOutput, string(output))
 	}
