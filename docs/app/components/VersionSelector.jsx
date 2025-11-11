@@ -61,7 +61,7 @@ const VersionSelector = ({ version }) => {
       }
       setIsLoaded(true);
     }
-  }, [version]);
+  }, []);
 
   const handleVersionChange = (e) => {
     const newVersion = e.target.value;
