@@ -427,10 +427,11 @@ Uses Cobra for command-line interface. Contains zero business logic.
 
 **cmd/check.go** - Defines `drift check`
 
-- Reads flags like `--config` (for specifying the config file) and `--changed-files`
-- Calls `config.Load()` to get the config
-- Calls [`assessor.New`](http://assessor.New)`()` to get the right assessor
-- Calls `drift.RunCheck()` to orchestrate the check
+- Reads flags like `--config` and `--changed-files`.
+- Calls `config.Load()` to get the config.
+- Calls `rules.FilterTriggeredRules()` to get the list of rules to check based on changed files.
+- Calls `assessor.New()` to get the right assessor.
+- Loops through triggered rules, reads files, and calls `assessor.Assess()` for each.
 
 ### `/pkg/config` - Configuration Management
 
@@ -439,6 +440,12 @@ Uses Cobra for command-line interface. Contains zero business logic.
 - Defines `Config` and `Mapping` structs (to match YAML)
 - `Load(path string) (*Config, error)` - Uses viper to find and unmarshal `.drift.yaml`
 - `CreateScaffold(path string) error` - Creates blank, commented `.drift.yaml` for `drift init`
+
+### `/pkg/rules` - Rule Filtering
+
+**filter.go**
+
+- `FilterTriggeredRules(rules []config.Rule, changedFiles []string) ([]config.Rule, error)`: Filters rules from the config against a list of changed file paths. It uses glob matching (with support for `**`) to determine which rules are "triggered". If `changedFiles` is empty, it returns all rules.
 
 ### `/pkg/assessor` - LLM Interface
 
@@ -468,20 +475,6 @@ type DocAssessor interface {
 - `type OpenAIAssessor struct { ... }`
 - `NewOpenAIAssessor() *OpenAIAssessor` - Reads `OPENAI_API_KEY` from env
 - `Assess(...)` - Formats OpenAI-specific prompt, makes API call
-
-### `/pkg/drift` - Core Orchestrator
-
-**check.go**
-
-`RunCheck(config *config.Config, changedFiles []string) error`:
-
-1. Takes the config and the list of changed files
-2. Loops through changed files to find which `config.Mapping`s were "triggered"
-3. For each triggered mapping, reads the doc/code files from disk
-4. Calls `assessor.Assess()` function
-5. Reads the `AssessmentResult`
-6. If `IsInSync == false`, prints the `Reason` and returns an error (which causes `exit 1`)
-7. If all checks pass, returns `nil`
 
 ### `/pkg/local` - Smart Context (v1.1 Optimization)
 

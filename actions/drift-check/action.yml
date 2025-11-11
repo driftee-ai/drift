@@ -16,6 +16,9 @@ inputs:
     description: 'The version of drift to install'
     required: false
     default: 'v0.1.11'
+  changed-files:
+    description: 'A comma-separated list of changed files to check'
+    required: false
 runs:
   using: "composite"
   steps:
@@ -34,5 +37,10 @@ runs:
     - name: Run Drift Check
       env:
         GEMINI_API_KEY: ${{ inputs.gemini-api-key }}
-      run: drift check --config ${{ inputs.config }}
+      run: |
+        if [ -n "${{ inputs.changed-files }}" ]; then
+          drift check --config ${{ inputs.config }} --changed-files "${{ inputs.changed-files }}"
+        else
+          drift check --config ${{ inputs.config }}
+        fi
       shell: bash

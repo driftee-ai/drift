@@ -1,4 +1,4 @@
-name: Unit Tests
+name: Drift
 
 on:
   push:
@@ -11,7 +11,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          separator: ","
+
       - name: Drift Check
         uses: ./actions/drift-check
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+          changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
