@@ -54,7 +54,9 @@ drift check --config /path/to/your/config.yaml
 
 The `.drift.yaml` file defines the rules for checking drift.
 
-- **`provider`**: The backend provider to use for assessing drift. Currently, only `"gemini"` is supported.
+- **`provider`**: The backend provider to use for assessing drift. Currently supported providers are:
+  - `"gemini"`: Uses the Google Gemini API.
+  - `"openai"`: Uses the OpenAI API.
 - **`rules`**: A list of rules to check.
   - **`name`**: A descriptive name for the rule.
   - **`code`**: A list of glob patterns for the code files.

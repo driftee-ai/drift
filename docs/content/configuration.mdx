@@ -7,7 +7,7 @@ The `drift` tool is configured using a `.drift.yaml` file in the root of your pr
 
 - **`version`** (required): The version of the configuration file format. Currently, this should be `1`.
 - **`provider`** (required): The backend provider to use for assessing drift. Currently supported providers are:
-    - `"gemini"`: Uses the Google Gemini API. Requires the `GOOGLE_API_KEY` environment variable to be set.
+    - `"gemini"`: Uses the Google Gemini API. Requires the `GEMINI_API_KEY` environment variable to be set.
     - `"openai"`: Uses the OpenAI API. Requires the `OPENAI_API_KEY` environment variable to be set.
 - **`rules`** (required): A list of rules to check.
 
