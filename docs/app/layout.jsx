@@ -25,7 +25,9 @@ const navbar = (
     }
   />
 );
-const footer = <Footer>MIT {new Date().getFullYear()} © Driftee.</Footer>;
+const footer = (
+  <Footer>Apache License 2.0 {new Date().getFullYear()} © Driftee.</Footer>
+);
 
 export default async function RootLayout({ children }) {
   return (

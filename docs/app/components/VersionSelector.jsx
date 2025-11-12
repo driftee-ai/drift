@@ -46,7 +46,7 @@ const VersionSelector = ({ version }) => {
       }
       setIsLoaded(true);
     }
-  }, [basePath, version]);
+  }, []);
 
   const handleVersionChange = (e) => {
     console.log("pathname", pathname);
