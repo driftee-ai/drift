@@ -38,9 +38,7 @@ const VersionSelector = ({ version }) => {
       const dummyVersions = ["latest", "v0.2.0", "v0.1.0"];
       setVersions(dummyVersions);
       const versionFromPath =
-        basePath && basePath.startsWith("/")
-          ? basePath.substring(1)
-          : basePath;
+        basePath && basePath.startsWith("/") ? basePath.substring(1) : basePath;
       if (dummyVersions.includes(versionFromPath)) {
         setCurrentVersion(versionFromPath);
       } else {
@@ -51,6 +49,7 @@ const VersionSelector = ({ version }) => {
   }, [basePath, version]);
 
   const handleVersionChange = (e) => {
+    console.log("pathname", pathname);
     const newVersion = e.target.value;
     window.location.href = `/${newVersion}${pathname}`;
   };
