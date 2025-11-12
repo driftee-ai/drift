@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 
 const VersionSelector = ({ version }) => {
+  const router = useRouter();
+  const pathname = usePathname();
   const [versions, setVersions] = useState([version]);
   const [currentVersion, setCurrentVersion] = useState(version);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -21,7 +24,7 @@ const VersionSelector = ({ version }) => {
         .then((data) => {
           if (Array.isArray(data) && data.length > 0) {
             setVersions(data);
-            const pathParts = window.location.pathname.split("/");
+            const pathParts = pathname.split("/");
             if (
               pathParts.length > 1 &&
               (data.includes(pathParts[1]) || pathParts[1] === "latest")
@@ -48,7 +51,7 @@ const VersionSelector = ({ version }) => {
       const dummyVersions = ["1.0", "2.0", "latest"];
       setVersions(dummyVersions);
 
-      const pathParts = window.location.pathname.split("/");
+      const pathParts = pathname.split("/");
       // Try to set currentVersion based on path, or default to 'latest'
       // If the current path segment is one of the dummy versions, use it.
       // Otherwise, default to 'latest' for display.
@@ -62,11 +65,11 @@ const VersionSelector = ({ version }) => {
       }
       setIsLoaded(true);
     }
-  }, []);
+  }, [pathname, version]);
 
   const handleVersionChange = (e) => {
     const newVersion = e.target.value;
-    const pathParts = window.location.pathname.split("/");
+    const pathParts = pathname.split("/");
 
     if (process.env.NODE_ENV !== "production") {
       // In development, for dummy versions, update the URL to reflect the selected version.
@@ -81,10 +84,10 @@ const VersionSelector = ({ version }) => {
           currentPathSegment === "latest")
       ) {
         console.log("case a");
-        window.location.pathname = `/${newVersion}/${restOfPath}`;
+        router.push(`/${newVersion}/${restOfPath}`);
       } else {
         console.log("case b");
-        window.location.pathname = `/${newVersion}/${pathParts.slice(1).join("/")}`;
+        router.push(`/${newVersion}/${pathParts.slice(1).join("/")}`);
       }
       return;
     }
@@ -96,10 +99,10 @@ const VersionSelector = ({ version }) => {
     ) {
       const restOfPath = pathParts.slice(2).join("/");
       console.log("case c");
-      window.location.pathname = `/${newVersion}/${restOfPath}`;
+      router.push(`/${newVersion}/${restOfPath}`);
     } else {
       console.log("case d");
-      window.location.pathname = `/${newVersion}/`;
+      router.push(`/${newVersion}/`);
     }
   };
 
