@@ -2,23 +2,26 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { uniq } from "lodash";
 
 const VersionSelector = ({ version }) => {
   const router = useRouter();
   const pathname = usePathname();
   const { basePath } = router;
 
-  const [versions, setVersions] = useState([version]);
+  const [versions, setVersions] = useState(uniq([version, "latest"]));
   const [currentVersion, setCurrentVersion] = useState(version);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    console.log("version");
     if (process.env.NODE_ENV === "production") {
       fetch("/versions.json")
         .then((res) => (res.ok ? res.json() : []))
         .then((data) => {
           if (Array.isArray(data) && data.length > 0) {
-            setVersions(data);
+            console.log("setting the versions in prod");
+            setVersions([...data, ...versions]);
           }
         })
         .catch((error) => {
@@ -36,7 +39,7 @@ const VersionSelector = ({ version }) => {
         });
     } else {
       const dummyVersions = ["latest", "v0.2.0", "v0.1.0"];
-      setVersions(dummyVersions);
+      setVersions([...versions, ...dummyVersions]);
       const versionFromPath =
         basePath && basePath.startsWith("/") ? basePath.substring(1) : basePath;
       if (dummyVersions.includes(versionFromPath)) {
