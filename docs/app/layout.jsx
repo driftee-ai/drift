@@ -25,7 +25,7 @@ const navbar = (
     }
   />
 );
-const footer = <Footer>MIT {new Date().getFullYear()} © Nextra.</Footer>;
+const footer = <Footer>MIT {new Date().getFullYear()} © Driftee.</Footer>;
 
 export default async function RootLayout({ children }) {
   return (

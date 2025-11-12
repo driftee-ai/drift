@@ -8,6 +8,7 @@ const VersionSelector = ({ version }) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    console.log("in use effect");
     if (process.env.NODE_ENV === "production") {
       fetch("/versions.json")
         .then((res) => {
@@ -79,8 +80,10 @@ const VersionSelector = ({ version }) => {
         (versions.includes(currentPathSegment) ||
           currentPathSegment === "latest")
       ) {
+        console.log("case a");
         window.location.pathname = `/${newVersion}/${restOfPath}`;
       } else {
+        console.log("case b");
         window.location.pathname = `/${newVersion}/${pathParts.slice(1).join("/")}`;
       }
       return;
@@ -92,8 +95,10 @@ const VersionSelector = ({ version }) => {
       (versions.includes(pathParts[1]) || pathParts[1] === "latest")
     ) {
       const restOfPath = pathParts.slice(2).join("/");
+      console.log("case c");
       window.location.pathname = `/${newVersion}/${restOfPath}`;
     } else {
+      console.log("case d");
       window.location.pathname = `/${newVersion}/`;
     }
   };
