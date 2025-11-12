@@ -20,7 +20,7 @@ const VersionSelector = ({ version }) => {
         .then((res) => (res.ok ? res.json() : []))
         .then((data) => {
           if (Array.isArray(data) && data.length > 0) {
-            console.log("setting the versions in prod");
+            console.log("setting the versions in prod", data, versions);
             setVersions([...data, ...versions]);
           }
         })
