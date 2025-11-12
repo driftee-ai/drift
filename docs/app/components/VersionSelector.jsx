@@ -32,7 +32,9 @@ const VersionSelector = ({ version }) => {
             basePath && basePath.startsWith("/")
               ? basePath.substring(1)
               : basePath;
+          console.log("versionFromPath", versionFromPath);
           if (versionFromPath) {
+            console.log("versionFromPath here erererer", versionFromPath);
             setCurrentVersion(versionFromPath);
           }
           setIsLoaded(true);
