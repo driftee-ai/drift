@@ -14,4 +14,17 @@ export default withNextra({
   basePath: basePath,
   trailingSlash: true,
   // ... Add regular Next.js options here
+  async headers() {
+    return [
+      {
+        source: "/versions.json",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache",
+          },
+        ],
+      },
+    ];
+  },
 });
