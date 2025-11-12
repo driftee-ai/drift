@@ -13,6 +13,7 @@ const VersionSelector = ({ version }) => {
   const [currentVersion, setCurrentVersion] = useState(version);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  console.log("currentVersion", currentVersion, versions);
   useEffect(() => {
     console.log("version", version, basePath);
     if (process.env.NODE_ENV === "production") {
