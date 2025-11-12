@@ -14,7 +14,7 @@ const VersionSelector = ({ version }) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    console.log("version");
+    console.log("version", version, basePath);
     if (process.env.NODE_ENV === "production") {
       fetch("/versions.json")
         .then((res) => (res.ok ? res.json() : []))
