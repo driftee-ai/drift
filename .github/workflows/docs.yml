@@ -38,6 +38,13 @@ jobs:
           BASE_PATH="/latest" NEXT_PUBLIC_VERSION="${{ github.ref_name }}" npm run build --prefix docs
           mv docs/out staging/latest
 
+      - name: Update versions.json
+        run: |
+          git fetch origin gh-pages
+          mkdir -p staging
+          git show origin/gh-pages:versions.json > staging/versions.json 2>/dev/null || echo '[]' > staging/versions.json
+          jq --arg version "${{ github.ref_name }}" '. | . + [$version] | unique | sort_by(.) | reverse' staging/versions.json > staging/versions.json.tmp && mv staging/versions.json.tmp staging/versions.json
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -45,18 +52,3 @@ jobs:
           publish_dir: ./staging
           keep_files: true
           cname: docs.driftee.ai
-
-      - name: Update versions.json
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin gh-pages
-          git checkout gh-pages
-          if [ ! -f "versions.json" ]; then
-            echo '[]' > versions.json
-          fi
-          jq --arg version "${{ github.ref_name }}" '. | . + [$version] | unique | sort_by(.) | reverse' versions.json > versions.json.tmp && mv versions.json.tmp versions.json
-          git add versions.json
-          git commit -m "Update versions.json for ${{ github.ref_name }}"
-          git push origin gh-pages
-
