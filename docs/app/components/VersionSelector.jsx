@@ -5,7 +5,7 @@ import { uniq } from "lodash";
 
 const fetchVersions = async () => {
   if (process.env.NODE_ENV === "production") {
-    const res = await fetch(`/versions.json?t=${new Date().getDate()}`);
+    const res = await fetch(`/versions.json?t=${new Date().getTime()}`);
     const data = res.ok ? await res.json() : [];
     console.log("data in prod", data);
     return data;
