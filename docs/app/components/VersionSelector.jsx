@@ -22,7 +22,7 @@ const VersionSelector = ({ version }) => {
   useEffect(() => {
     const fetchData = async () => {
       const newVersions = await fetchVersions();
-      setVersions(uniq([...versions, ...newVersions]));
+      setVersions((prev) => uniq([...prev, ...newVersions]));
       setIsLoaded(true);
     };
     fetchData();
