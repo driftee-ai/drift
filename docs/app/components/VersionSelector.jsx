@@ -30,10 +30,10 @@ const VersionSelector = ({ version }) => {
 
   const handleVersionChange = (e) => {
     const newVersion = e.target.value;
+    setCurrentVersion(newVersion);
     if (process.env.NODE_ENV === "production") {
       window.location.href = `/${newVersion}`;
     } else {
-      setCurrentVersion(newVersion);
       console.log("setting new version in dev", newVersion);
     }
   };
