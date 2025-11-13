@@ -5,7 +5,8 @@ import { uniq } from "lodash";
 
 const fetchVersions = async () => {
   if (process.env.NODE_ENV === "production") {
-    const res = await fetch(`/versions.json?t=${new Date().getTime()}`);
+    const url = `${window.location.origin}/versions.json?t=${new Date().getTime()}`;
+    const res = await fetch(url);
     const data = res.ok ? await res.json() : [];
     console.log("data in prod", data);
     return data;
@@ -30,10 +31,10 @@ const VersionSelector = ({ version }) => {
 
   const handleVersionChange = (e) => {
     const newVersion = e.target.value;
-    setCurrentVersion(newVersion);
     if (process.env.NODE_ENV === "production") {
-      window.location.href = `/${newVersion}`;
+      window.location.href = `/${newVersion}/`;
     } else {
+      setCurrentVersion(newVersion);
       console.log("setting new version in dev", newVersion);
     }
   };
