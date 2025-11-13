@@ -1,63 +1,41 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { uniq } from "lodash";
+import { usePathname } from "next/navigation";
+
+const fetchVersions = async () => {
+  try {
+    const res = await fetch("/versions.json");
+    const data = res.ok ? await res.json() : [];
+    console.log("data", data);
+    return data;
+  } catch (error) {
+    console.error("Error fetching or parsing versions.json:", error);
+    return ["latest", "v0.2.0", "v0.1.0"];
+  }
+};
 
 const VersionSelector = ({ version }) => {
-  const router = useRouter();
   const pathname = usePathname();
-  const { basePath } = router;
 
-  const [versions, setVersions] = useState(uniq([version, "latest"]));
+  const [versions, setVersions] = useState([...new Set([version, "latest"])]);
   const [currentVersion, setCurrentVersion] = useState(version);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  console.log("currentVersion", currentVersion, versions);
-  useEffect(() => {
-    console.log("version", version, basePath);
-    if (process.env.NODE_ENV === "production") {
-      fetch("/versions.json")
-        .then((res) => (res.ok ? res.json() : []))
-        .then((data) => {
-          if (Array.isArray(data) && data.length > 0) {
-            console.log("setting the versions in prod", data, versions);
-            setVersions([...data, ...versions]);
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching or parsing versions.json:", error);
-        })
-        .finally(() => {
-          const versionFromPath =
-            basePath && basePath.startsWith("/")
-              ? basePath.substring(1)
-              : basePath;
-          console.log("versionFromPath", versionFromPath);
-          if (versionFromPath) {
-            console.log("versionFromPath here erererer", versionFromPath);
-            setCurrentVersion(versionFromPath);
-          }
-          setIsLoaded(true);
-        });
-    } else {
-      const dummyVersions = ["latest", "v0.2.0", "v0.1.0"];
-      setVersions([...versions, ...dummyVersions]);
-      const versionFromPath =
-        basePath && basePath.startsWith("/") ? basePath.substring(1) : basePath;
-      if (dummyVersions.includes(versionFromPath)) {
-        setCurrentVersion(versionFromPath);
-      } else {
-        setCurrentVersion("latest");
-      }
-      setIsLoaded(true);
-    }
+  useEffect(async () => {
+    const newVersions = await fetchVersions();
+    setVersions([...versions, ...newVersions]);
+    setIsLoaded(true);
   }, []);
 
   const handleVersionChange = (e) => {
-    console.log("pathname", pathname);
     const newVersion = e.target.value;
-    window.location.href = `/${newVersion}${pathname}`;
+    if (process.env.NODE_ENV === "production") {
+      window.location.href = `/${newVersion}`;
+    } else {
+      setCurrentVersion(newVersion);
+      console.log("setting new version in dev", newVersion);
+    }
   };
 
   return (
