@@ -21,13 +21,18 @@ const VersionSelector = ({ version }) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    const pathSegments = window.location.pathname.split("/").filter(Boolean);
+    const versionFromPath = pathSegments[0] || "latest";
+    console.log("Version from prop (build time):", version);
+    console.log("Version from URL (run time):", versionFromPath);
+
     const fetchData = async () => {
       const newVersions = await fetchVersions();
       setVersions((prev) => uniq([...prev, ...newVersions]));
       setIsLoaded(true);
     };
     fetchData();
-  }, []);
+  }, [version]);
 
   const handleVersionChange = (e) => {
     const newVersion = e.target.value;
