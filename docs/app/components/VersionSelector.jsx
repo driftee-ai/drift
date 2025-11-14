@@ -1,50 +1,47 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { uniq } from "lodash";
 
-const fetchVersions = async () => {
-  if (process.env.NODE_ENV === "production") {
-    const url = `${window.location.origin}/versions.json?t=${new Date().getTime()}`;
-    const res = await fetch(url);
-    const data = res.ok ? await res.json() : [];
-    console.log("data in prod", data);
-    return data;
-  } else {
-    return ["latest", "v0.2.0", "v0.1.0"];
-  }
-};
+const VersionSelector = () => {
+  const pathname = usePathname();
+  const pathParts = pathname.split("/");
+  const versionFromPath = pathParts[1] || "latest";
 
-const VersionSelector = ({ version }) => {
-  const [versions, setVersions] = useState(uniq([version, "latest"]));
-  const [currentVersion, setCurrentVersion] = useState(version);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [versions, setVersions] = useState([versionFromPath]);
+  const [currentVersion, setCurrentVersion] = useState(versionFromPath);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const newVersions = await fetchVersions();
-      setVersions((prev) => uniq([...prev, ...newVersions]));
-      setIsLoaded(true);
+    const fetchVersions = async () => {
+      try {
+        const url = `https://docs.driftee.ai/versions.json?t=${new Date().getTime()}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          // Use a functional update to avoid race conditions with state
+          setVersions((prev) => uniq([...prev, ...data, "latest"]));
+        }
+      } catch (error) {
+        console.error("Failed to fetch versions:", error);
+      }
     };
-    fetchData();
-  }, []);
+
+    fetchVersions();
+  }, []); // Fetch only once
+
+  // Effect to sync currentVersion with path changes during client navigation
+  useEffect(() => {
+    setCurrentVersion(versionFromPath);
+  }, [versionFromPath]);
 
   const handleVersionChange = (e) => {
     const newVersion = e.target.value;
-    if (process.env.NODE_ENV === "production") {
-      window.location.href = `/${newVersion}/`;
-    } else {
-      setCurrentVersion(newVersion);
-      console.log("setting new version in dev", newVersion);
-    }
+    window.location.href = `/${newVersion}/`;
   };
 
   return (
-    <select
-      value={currentVersion}
-      onChange={handleVersionChange}
-      disabled={!isLoaded && process.env.NODE_ENV === "production"}
-    >
+    <select value={currentVersion} onChange={handleVersionChange}>
       {versions.map((v) => (
         <option key={v} value={v}>
           {v}
