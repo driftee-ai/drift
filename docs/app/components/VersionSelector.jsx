@@ -5,6 +5,10 @@ import { usePathname } from "next/navigation";
 import { uniq } from "lodash";
 
 const VersionSelector = () => {
+  console.log(
+    "VersionSelector re-rendered at",
+    new Date().toLocaleTimeString()
+  );
   const pathname = usePathname();
   const pathParts = pathname.split("/");
   const versionFromPath = pathParts[1] || "latest";
@@ -13,12 +17,14 @@ const VersionSelector = () => {
   const [currentVersion, setCurrentVersion] = useState(versionFromPath);
 
   useEffect(() => {
+    console.log("Fetching versions...");
     const fetchVersions = async () => {
       try {
         const url = `https://docs.driftee.ai/versions.json?t=${new Date().getTime()}`;
         const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
+          console.log("Versions loaded, setting state.");
           // Use a functional update to avoid race conditions with state
           setVersions((prev) => uniq([...prev, ...data, "latest"]));
         }
