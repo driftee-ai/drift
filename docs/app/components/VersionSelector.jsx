@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { uniq } from "lodash";
 
-const VersionSelector = memo(() => {
+const VersionSelector = () => {
   const pathname = usePathname();
   const pathParts = pathname.split("/");
   const versionFromPath = pathParts[1] || "latest";
@@ -49,6 +49,6 @@ const VersionSelector = memo(() => {
       ))}
     </select>
   );
-});
+};
 
 export default VersionSelector;

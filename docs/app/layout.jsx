@@ -14,14 +14,13 @@ const banner = undefined;
 const navbar = (
   <Navbar
     logo={
-      <>
-        <div style={{ marginRight: 12 }}>
-          <b>Drift</b>
-        </div>
-        <VersionSelector />
-      </>
+      <div style={{ marginRight: 12 }}>
+        <b>Drift</b>
+      </div>
     }
-  />
+  >
+    <VersionSelector />
+  </Navbar>
 );
 const footer = (
   <Footer>Apache License 2.0 {new Date().getFullYear()} © Driftee.</Footer>
