@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { uniq } from "lodash";
+import semver from "semver";
 
 const VersionSelector = () => {
   // The version is derived from the basePath, which is set at build time
-  const versionFromPath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace("/", "") || "latest";
+  const versionFromPath =
+    (process.env.NEXT_PUBLIC_BASE_PATH || "").replace("/", "") || "latest";
 
   const [versions, setVersions] = useState([versionFromPath]);
   const [currentVersion, setCurrentVersion] = useState(versionFromPath);
@@ -33,9 +35,12 @@ const VersionSelector = () => {
     window.location.href = `/${newVersion}/`;
   };
 
+  const withoutLatest = versions.filter((v) => v !== "latest");
+  const sorted = withoutLatest.sort(semver.rcompare);
   return (
     <select value={currentVersion} onChange={handleVersionChange}>
-      {versions.map((v) => (
+      <option value="latest">Latest ({sorted[0]})</option>
+      {sorted.map((v) => (
         <option key={v} value={v}>
           {v}
         </option>
