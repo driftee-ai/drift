@@ -7,6 +7,8 @@ import { uniq } from "lodash";
 const VersionSelector = () => {
   const pathname = usePathname();
   const versionFromPath = pathname.split("/").filter(Boolean)[0] || "latest";
+  console.log("pathname", pathname);
+  console.log("versionFromPath", versionFromPath);
 
   const [versions, setVersions] = useState([versionFromPath]);
   const [currentVersion, setCurrentVersion] = useState(versionFromPath);
@@ -28,8 +30,6 @@ const VersionSelector = () => {
 
     fetchVersions();
   }, []); // Fetch only once
-
-
 
   const handleVersionChange = (e) => {
     const newVersion = e.target.value;
