@@ -12,14 +12,13 @@ export const metadata = {
 // const banner = <Banner storageKey="some-key">Drift 1.0 is released 🎉</Banner>;
 const banner = undefined;
 const navbar = (
-  <Navbar
-    logo={
-      <div style={{ marginRight: 12 }}>
+  <Navbar>
+    <div style={{ order: -1, display: "flex", alignItems: "center" }}>
+      <div style={{ marginRight: 24 }}>
         <b>Drift</b>
       </div>
-    }
-  >
-    <VersionSelector />
+      <VersionSelector />
+    </div>
   </Navbar>
 );
 const footer = (
