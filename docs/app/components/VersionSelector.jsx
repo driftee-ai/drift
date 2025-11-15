@@ -6,8 +6,7 @@ import { uniq } from "lodash";
 
 const VersionSelector = () => {
   const pathname = usePathname();
-  const pathParts = pathname.split("/");
-  const versionFromPath = pathParts[1] || "latest";
+  const versionFromPath = pathname.split("/").filter(Boolean)[0] || "latest";
 
   const [versions, setVersions] = useState([versionFromPath]);
   const [currentVersion, setCurrentVersion] = useState(versionFromPath);
@@ -30,10 +29,7 @@ const VersionSelector = () => {
     fetchVersions();
   }, []); // Fetch only once
 
-  // Effect to sync currentVersion with path changes during client navigation
-  useEffect(() => {
-    setCurrentVersion(versionFromPath);
-  }, [versionFromPath]);
+
 
   const handleVersionChange = (e) => {
     const newVersion = e.target.value;
