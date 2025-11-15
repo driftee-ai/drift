@@ -13,6 +13,9 @@ export default withNextra({
   output: "export",
   basePath: basePath,
   trailingSlash: true,
+  env: {
+    NEXT_PUBLIC_BASE_PATH: basePath,
+  },
   // ... Add regular Next.js options here
   async headers() {
     return [

@@ -1,14 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import { uniq } from "lodash";
 
 const VersionSelector = () => {
-  const pathname = usePathname();
-  const versionFromPath = pathname.split("/").filter(Boolean)[0] || "latest";
-  console.log("pathname", pathname);
-  console.log("versionFromPath", versionFromPath);
+  // The version is derived from the basePath, which is set at build time
+  const versionFromPath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace("/", "") || "latest";
 
   const [versions, setVersions] = useState([versionFromPath]);
   const [currentVersion, setCurrentVersion] = useState(versionFromPath);
