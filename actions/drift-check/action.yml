@@ -29,7 +29,8 @@ runs:
         set -e
         DRIFT_VERSION="v0.1.1"
         echo "Installing Drift version $DRIFT_VERSION"
-        DOWNLOAD_URL="https://github.com/driftee-ai/drift/releases/download/$DRIFT_VERSION/drift_${DRIFT_VERSION}_Linux_x86_64.tar.gz"
+        VERSION_NO_V=${DRIFT_VERSION#v}
+        DOWNLOAD_URL="https://github.com/driftee-ai/drift/releases/download/$DRIFT_VERSION/drift_${VERSION_NO_V}_Linux_x86_64.tar.gz"
         echo "Downloading from: $DOWNLOAD_URL"
         curl --fail -sSL "$DOWNLOAD_URL" -o drift.tar.gz
         tar -xzf drift.tar.gz drift
