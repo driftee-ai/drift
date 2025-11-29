@@ -18,7 +18,7 @@ jobs:
           separator: ","
 
       - name: Drift Check
-        uses: ./actions/drift-check
+        uses: driftee-ai/drift-action@v1
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
           changed-files: ${{ steps.changed-files.outputs.all_changed_files }}

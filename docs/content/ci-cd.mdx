@@ -1,11 +1,99 @@
 # CI/CD Integration
 
-`drift` is designed to be a part of your CI/CD pipeline, helping you catch documentation drift before it gets merged.
+`drift` is designed to be a part of your CI/CD pipeline, helping you catch documentation drift before it gets merged. While you can run it locally, its true power is unlocking automated, intelligent reviews on every Pull Request.
 
-### GitHub Action
+## GitHub Action
 
-We provide an official [GitHub Action](https://github.com/driftee-ai/drift/tree/main/actions/drift-check) to make this integration seamless.
+We provide an official [GitHub Action](https://github.com/driftee-ai/drift-action) to make integration seamless.
 
-By adding a simple step to your workflow, you can automatically run `drift check` on every pull request. The action will fail if drift is detected, preventing the pull request from being merged until the documentation is back in sync.
+### Basic Usage
+For detailed setup instructions, please see the [action's README](https://github.com/driftee-ai/drift-action).
+At a minimum, you can run `drift check` against your entire repository. This ensures that *all* documentation is currently in sync with *all* code.
 
-For detailed setup instructions, please see the [action's README](https://github.com/driftee-ai/drift/tree/main/actions/drift-check).
+```yaml
+name: Drift Check
+on: [pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Drift
+        uses: driftee-ai/drift-action@v1
+        with:
+          # Ensure your API key is stored in GitHub Secrets
+          gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+```
+
+### Optimized Usage (Recommended)
+
+Running `drift` on the entire codebase for every small PR is inefficient and can consume unnecessary LLM tokens. **We strongly recommend configuring the action to check only changed files.**
+
+When you pass the `changed-files` input, `drift` will:
+1.  Filter your rules to find only those affected by the changes.
+2.  Only assess the code/docs that are actually "in play" for this PR.
+
+#### Option 1: Using `tj-actions/changed-files` (Easiest)
+
+We recommend using the robust [tj-actions/changed-files](https://github.com/tj-actions/changed-files) action to reliably detect changes.
+
+```yaml
+name: Drift Check
+on: [pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # 1. Detect changed files
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          separator: ","
+
+      # 2. Pass them to Drift
+      - name: Run Drift
+        uses: driftee-ai/drift-action@v1
+        with:
+          gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+          changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
+```
+
+#### Option 2: Using Native Git (No Dependencies)
+
+If you prefer not to add external dependencies, you can use native `git` commands to find the difference between the PR branch and the target branch.
+
+```yaml
+name: Drift Check
+on: [pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required to fetch history for git diff
+
+      - name: Run Drift
+        uses: driftee-ai/drift-action@v1
+        env:
+          # Compare HEAD against the base branch (usually origin/main)
+          CHANGED_FILES: $(git diff --name-only origin/${{ githubhb.base_ref }}...HEAD | tr '\n' ',')
+        with:
+          gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+          changed-files: ${{ env.CHANGED_FILES }}
+```
+
+### Behavior on Drift
+
+When the action detects drift:
+1.  It will **log the specific reason** why the code and docs are out of sync (provided by the LLM).
+2.  It will **exit with a failure code**, which will flag the check as "failed" on your Pull Request.
+
+This doesn't strictly prevent merging (unless you configure it as a required check in GitHub settings), but it serves as a strong signal to the reviewer that the documentation needs attention.
