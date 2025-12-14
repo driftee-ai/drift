@@ -3,10 +3,45 @@ package files
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
 )
+
+// WalkProject walks the current directory and returns a list of all files,
+// ignoring common non-project directories (like .git, node_modules).
+func WalkProject() ([]string, error) {
+	var files []string
+	ignoredDirs := map[string]bool{
+		".git":         true,
+		".idea":        true,
+		".vscode":      true,
+		"node_modules": true,
+		"vendor":       true,
+		"dist":         true,
+		"build":        true,
+		".next":        true,
+		"target":       true,
+		"bin":          true,
+		"obj":          true,
+	}
+
+	err := filepath.WalkDir(".", func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			if ignoredDirs[d.Name()] {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		files = append(files, path)
+		return nil
+	})
+	return files, err
+}
 
 // FindFiles takes a list of glob patterns and returns a list of matching file paths.
 func FindFiles(patterns []string) ([]string, error) {

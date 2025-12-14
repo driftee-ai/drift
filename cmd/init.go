@@ -2,21 +2,25 @@ package cmd
 
 import (
 	"fmt"
-	"log"
+	"os"
 
-	"github.com/driftee-ai/drift/pkg/config"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/driftee-ai/drift/pkg/tui"
 	"github.com/spf13/cobra"
 )
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initializes a new .drift.yaml configuration file.",
+	Short: "Initializes a new .drift.yaml configuration file interactively.",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := config.CreateScaffold(".drift.yaml")
-		if err != nil {
-			log.Fatalf("Failed to create .drift.yaml: %v", err)
+		// Create a new Bubble Tea program
+		p := tea.NewProgram(tui.NewModel(), tea.WithAltScreen())
+
+		// Run the TUI program
+		if _, err := p.Run(); err != nil {
+			fmt.Printf("Error running init wizard: %v\n", err)
+			os.Exit(1)
 		}
-		fmt.Println(".drift.yaml created successfully.")
 	},
 }
 

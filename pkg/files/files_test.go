@@ -134,6 +134,56 @@ func TestReadAndConcatenate(t *testing.T) {
 	}
 }
 
+func TestWalkProject(t *testing.T) {
+	tmpDir, cleanup := setupTestFiles(t)
+	defer cleanup()
+
+	// Create some ignored directories and files
+	if err := os.MkdirAll(filepath.Join(tmpDir, ".git"), 0755); err != nil {
+		t.Fatalf("Failed to create .git dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, ".git", "config"), []byte("[core]"), 0644); err != nil {
+		t.Fatalf("Failed to write .git/config: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(tmpDir, "node_modules"), 0755); err != nil {
+		t.Fatalf("Failed to create node_modules dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "node_modules", "package.js"), []byte("module.exports = {}"), 0644); err != nil {
+		t.Fatalf("Failed to write node_modules/package.js: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(tmpDir, "vendor"), 0755); err != nil {
+		t.Fatalf("Failed to create vendor dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tmpDir, "vendor", "lib.go"), []byte("package vendor"), 0644); err != nil {
+		t.Fatalf("Failed to write vendor/lib.go: %v", err)
+	}
+	// Hidden file not in an ignored dir (should be included)
+	if err := os.WriteFile(filepath.Join(tmpDir, ".env"), []byte("SECRET=123"), 0644); err != nil {
+		t.Fatalf("Failed to write .env: %v", err)
+	}
+
+	expectedFiles := []string{
+		".env",
+		"README.md",
+		filepath.Join("docs", "api", "auth.md"),
+		filepath.Join("docs", "api", "users.md"),
+		filepath.Join("src", "api", "auth.go"),
+		filepath.Join("src", "api", "user.go"),
+	}
+
+	gotFiles, err := files.WalkProject()
+	if err != nil {
+		t.Fatalf("WalkProject() error = %v", err)
+	}
+
+	sort.Strings(gotFiles)
+	sort.Strings(expectedFiles)
+
+	if !compareStringSlices(gotFiles, expectedFiles) {
+		t.Errorf("WalkProject() got = %v, want %v", gotFiles, expectedFiles)
+	}
+}
+
 // Helper to compare string slices (order-independent)
 func compareStringSlices(a, b []string) bool {
 	if len(a) != len(b) {
