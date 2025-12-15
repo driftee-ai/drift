@@ -184,6 +184,65 @@ func TestWalkProject(t *testing.T) {
 	}
 }
 
+func TestWalkProjectWithGitIgnore(t *testing.T) {
+	_, cleanup := setupTestFiles(t)
+	defer cleanup()
+
+	// Create .gitignore
+	gitIgnoreContent := `
+*.log
+temp/
+secret.txt
+`
+	if err := os.WriteFile("ignore.log", []byte("should be ignored"), 0644); err != nil {
+		t.Fatalf("Failed to write ignore.log: %v", err)
+	}
+	if err := os.WriteFile("keep.txt", []byte("should be kept"), 0644); err != nil {
+		t.Fatalf("Failed to write keep.txt: %v", err)
+	}
+	if err := os.WriteFile("secret.txt", []byte("should be ignored"), 0644); err != nil {
+		t.Fatalf("Failed to write secret.txt: %v", err)
+	}
+	if err := os.Mkdir("temp", 0755); err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join("temp", "temp.go"), []byte("package temp"), 0644); err != nil {
+		t.Fatalf("Failed to write temp/temp.go: %v", err)
+	}
+	if err := os.WriteFile(".gitignore", []byte(gitIgnoreContent), 0644); err != nil {
+		t.Fatalf("Failed to write .gitignore: %v", err)
+	}
+
+	// Expected files (standard setup files + keep.txt)
+	// Standard setup files from setupTestFiles:
+	// src/api/user.go
+	// src/api/auth.go
+	// docs/api/users.md
+	// docs/api/auth.md
+	// README.md
+	expectedFiles := []string{
+		"README.md",
+		filepath.Join("docs", "api", "auth.md"),
+		filepath.Join("docs", "api", "users.md"),
+		"keep.txt",
+		filepath.Join("src", "api", "auth.go"),
+		filepath.Join("src", "api", "user.go"),
+		".gitignore", // .gitignore itself is usually not ignored unless specified
+	}
+
+	gotFiles, err := files.WalkProject()
+	if err != nil {
+		t.Fatalf("WalkProject() error = %v", err)
+	}
+
+	sort.Strings(gotFiles)
+	sort.Strings(expectedFiles)
+
+	if !compareStringSlices(gotFiles, expectedFiles) {
+		t.Errorf("WalkProject() got = %v, want %v", gotFiles, expectedFiles)
+	}
+}
+
 // Helper to compare string slices (order-independent)
 func compareStringSlices(a, b []string) bool {
 	if len(a) != len(b) {

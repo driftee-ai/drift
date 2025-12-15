@@ -7,10 +7,12 @@ import (
 	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
+	ignore "github.com/sabhiram/go-gitignore"
 )
 
 // WalkProject walks the current directory and returns a list of all files,
-// ignoring common non-project directories (like .git, node_modules).
+// ignoring common non-project directories (like .git, node_modules) and
+// respecting .gitignore if present.
 func WalkProject() ([]string, error) {
 	var files []string
 	ignoredDirs := map[string]bool{
@@ -27,14 +29,36 @@ func WalkProject() ([]string, error) {
 		"obj":          true,
 	}
 
+	// Attempt to load .gitignore
+	var gitIgnore *ignore.GitIgnore
+	if _, err := os.Stat(".gitignore"); err == nil {
+		gitIgnore, _ = ignore.CompileIgnoreFile(".gitignore")
+	}
+
 	err := filepath.WalkDir(".", func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if d.IsDir() {
-			if ignoredDirs[d.Name()] {
+
+		// Skip current directory "."
+		if path == "." {
+			return nil
+		}
+
+		// Check hardcoded ignores
+		if d.IsDir() && ignoredDirs[d.Name()] {
+			return filepath.SkipDir
+		}
+
+		// Check .gitignore
+		if gitIgnore != nil && gitIgnore.MatchesPath(path) {
+			if d.IsDir() {
 				return filepath.SkipDir
 			}
+			return nil
+		}
+
+		if d.IsDir() {
 			return nil
 		}
 		files = append(files, path)
