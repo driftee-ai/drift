@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -36,18 +37,35 @@ const (
 
 // FileInfo holds information about a discovered file.
 type FileInfo struct {
-	Path        string
-	Type        DocFileType
-	Size        int64
-	IsSelected  bool   // For interactive selection
-	IsIgnored   bool   // For interactive ignore
-	Description string // LLM generated description
+	Path       string
+	Type       DocFileType
+	Size       int64
+	IsSelected bool   // For interactive selection
+	IsIgnored  bool   // For interactive ignore
+	LLMSummary string // LLM generated description
+}
+
+// FilterValue implements list.Item.
+func (f FileInfo) FilterValue() string { return f.Path }
+
+// Title implements list.Item.
+func (f FileInfo) Title() string {
+	if f.IsIgnored {
+		return "[IGNORED] " + f.Path
+	}
+	return f.Path
+}
+
+// Description implements list.Item.
+func (f FileInfo) Description() string {
+	return fmt.Sprintf("Size: %d bytes", f.Size)
 }
 
 // Model is the main Bubble Tea model for the init wizard.
 type Model struct {
 	state       State
 	spinner     spinner.Model
+	list        list.Model
 	err         error
 	width       int
 	height      int
@@ -62,9 +80,17 @@ func NewModel() Model {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(HighlightColor)
+
+	// Initialize list with an empty set of items and a default delegate
+	// This ensures m.list is never nil when SetSize is called
+	l := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	l.Title = "Review Documentation Files" // Set initial title
+	l.SetStatusBarItemName("file", "files")
+
 	return Model{
 		state:       StateLoading,
 		spinner:     s,
+		list:        l, // Initialize the list model
 		loadingText: "Starting wizard...",
 	}
 }
@@ -86,9 +112,49 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
+		// Handle State-specific keys
+		if m.state == StateDiscovery {
+			switch msg.String() {
+			case "enter":
+				// Confirm selection and move to next state
+				m.state = StateGrouping
+				// TODO: Initiate Grouping logic here (LLM call)
+				return m, nil
+			case "space":
+				// Toggle ignore status
+				if selectedItem, ok := m.list.SelectedItem().(FileInfo); ok {
+					index := m.list.Index()
+					// Toggle status
+					selectedItem.IsIgnored = !selectedItem.IsIgnored
+
+					// Update in the list
+					m.list.SetItem(index, selectedItem)
+
+					// Update in our local state (find by path to be safe, or just index if synchronized)
+					// Since m.docFiles maps 1:1 to list items initially, we can use index,
+					// BUT list filtering might mess up indices if we enabled filtering.
+					// Ideally we find by path.
+					for i, f := range m.docFiles {
+						if f.Path == selectedItem.Path {
+							m.docFiles[i].IsIgnored = selectedItem.IsIgnored
+							break
+						}
+					}
+
+					return m, nil
+				}
+			}
+		}
+
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		// Ensure list is not nil before calling SetSize
+		if m.list.Width() == 0 && m.list.Height() == 0 { // Check if it's still at initial empty size
+			m.list.SetSize(msg.Width, msg.Height)
+		} else {
+			m.list.SetSize(msg.Width, msg.Height)
+		}
 
 	case errMsg:
 		m.err = msg.error
@@ -98,13 +164,36 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case filesDiscoveredMsg:
 		m.allFiles = msg.allFiles
 		m.docFiles, m.codeFiles = classifyFiles(m.allFiles)
+
+		// Prepare items for the list
+		items := make([]list.Item, len(m.docFiles))
+		for i, f := range m.docFiles {
+			items[i] = f
+		}
+		m.list.SetItems(items)
+
+		// Set up delegate styles (only need to do once unless we change delegates)
+		delegate := list.NewDefaultDelegate()
+		delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.Foreground(lipgloss.Color("205")).Bold(true)
+		delegate.Styles.SelectedDesc = delegate.Styles.SelectedDesc.Foreground(lipgloss.Color("205"))
+		m.list.SetDelegate(delegate)
+
+		m.list.Title = "Review Documentation Files" // Re-assert title
+		m.list.SetStatusBarItemName("file", "files")
+
 		m.state = StateDiscovery
 		m.loadingText = "" // Clear loading text
 		return m, nil
 	}
 
-	m.spinner, cmd = m.spinner.Update(msg)
-	cmds = append(cmds, cmd)
+	// Route updates based on state
+	if m.state == StateDiscovery {
+		m.list, cmd = m.list.Update(msg)
+		cmds = append(cmds, cmd)
+	} else {
+		m.spinner, cmd = m.spinner.Update(msg)
+		cmds = append(cmds, cmd)
+	}
 
 	return m, tea.Batch(cmds...)
 }
@@ -115,37 +204,47 @@ func (m Model) View() string {
 		return fmt.Sprintf("Error: %v\n", m.err)
 	}
 
-	s := strings.Builder{}
-	s.WriteString(HeaderStyle.Width(m.width).Render("Drift Init Wizard"))
-	s.WriteString("\n\n")
-
 	switch m.state {
 	case StateLoading:
+		s := strings.Builder{}
+		s.WriteString(HeaderStyle.Width(m.width).Render("Drift Init Wizard"))
+		s.WriteString("\n\n")
 		s.WriteString(fmt.Sprintf("%s %s\n", m.spinner.View(), m.loadingText))
+		return AppStyle.Render(s.String())
+
 	case StateDiscovery:
-		s.WriteString(fmt.Sprintf("Discovery: Found %d doc files and %d code files.\n\n", len(m.docFiles), len(m.codeFiles)))
-		s.WriteString("Doc Files:\n")
-		for i, file := range m.docFiles {
-			s.WriteString(fmt.Sprintf("  %d: %s\n", i+1, file.Path))
-		}
-		s.WriteString("\nCode Files:\n")
-		for i, file := range m.codeFiles {
-			s.WriteString(fmt.Sprintf("  %d: %s\n", i+1, file.Path))
-		}
-		s.WriteString("\nPress 'q' or 'ctrl+c' to quit.\n")
+		return AppStyle.Render(m.list.View())
 
 	case StateGrouping:
+		s := strings.Builder{}
+		s.WriteString(HeaderStyle.Width(m.width).Render("Drift Init Wizard"))
+		s.WriteString("\n\n")
 		s.WriteString("Grouping files...\n")
+		return AppStyle.Render(s.String())
+
 	case StateMapping:
+		s := strings.Builder{}
+		s.WriteString(HeaderStyle.Width(m.width).Render("Drift Init Wizard"))
+		s.WriteString("\n\n")
 		s.WriteString("Mapping files...\n")
+		return AppStyle.Render(s.String())
+
 	case StateFinalize:
+		s := strings.Builder{}
+		s.WriteString(HeaderStyle.Width(m.width).Render("Drift Init Wizard"))
+		s.WriteString("\n\n")
 		s.WriteString("Finalizing configuration...\n")
+		return AppStyle.Render(s.String())
+
 	case StateDone:
+		s := strings.Builder{}
+		s.WriteString(HeaderStyle.Width(m.width).Render("Drift Init Wizard"))
+		s.WriteString("\n\n")
 		s.WriteString("Configuration created successfully!\n")
+		return AppStyle.Render(s.String())
 	}
 
-	s.WriteString("\n")
-	return AppStyle.Render(s.String())
+	return ""
 }
 
 // messages for async operations
