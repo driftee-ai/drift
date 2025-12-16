@@ -51,9 +51,9 @@ func (f FileInfo) FilterValue() string { return f.Path }
 // Title implements list.Item.
 func (f FileInfo) Title() string {
 	if f.IsIgnored {
-		return "[IGNORED] " + f.Path
+		return "[ ] " + f.Path
 	}
-	return f.Path
+	return "[x] " + f.Path
 }
 
 // Description implements list.Item.
@@ -120,7 +120,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.state = StateGrouping
 				// TODO: Initiate Grouping logic here (LLM call)
 				return m, nil
-			case "space":
+			case " ":
 				// Toggle ignore status
 				if selectedItem, ok := m.list.SelectedItem().(FileInfo); ok {
 					index := m.list.Index()

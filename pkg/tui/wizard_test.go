@@ -3,6 +3,7 @@ package tui
 import (
 	"testing"
 
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 )
@@ -84,6 +85,43 @@ func TestUpdate_Discovery(t *testing.T) {
 	assert.Equal(t, 2, len(newM.allFiles))
 	assert.Equal(t, 1, len(newM.docFiles))
 	assert.Equal(t, 1, len(newM.codeFiles))
+}
+
+func TestUpdate_ToggleIgnore(t *testing.T) {
+	m := NewModel()
+
+	// Setup: Discovery state with one doc file
+	docFile := FileInfo{Path: "README.md", Type: TypeDoc, IsIgnored: false}
+	m.state = StateDiscovery
+	m.docFiles = []FileInfo{docFile}
+	m.list.SetItems([]list.Item{docFile})
+
+	// Select the first item (should be default, but ensuring)
+	m.list.Select(0)
+
+	// Simulate 'space' keypress
+	msg := tea.KeyMsg{Type: tea.KeySpace, Runes: []rune(" ")}
+
+	// Update
+	newModel, _ := m.Update(msg)
+	newM := newModel.(Model)
+
+	// Verify the item in the list is updated
+	selectedItem := newM.list.SelectedItem().(FileInfo)
+	assert.True(t, selectedItem.IsIgnored, "Item in list should be ignored")
+
+	// Verify the item in the slice is updated
+	// Note: The slice update logic in wizard.go relies on matching Path
+	// Because we manually constructed m.docFiles and m.list separately in this test setup,
+	// we need to ensure the logic in Update actually propagates the change to m.docFiles.
+	// In the real app, m.docFiles sources the list items.
+	assert.True(t, newM.docFiles[0].IsIgnored, "Item in docFiles slice should be ignored")
+
+	// Toggle back
+	newModel, _ = newM.Update(msg)
+	newM = newModel.(Model)
+	selectedItem = newM.list.SelectedItem().(FileInfo)
+	assert.False(t, selectedItem.IsIgnored, "Item should be un-ignored after second toggle")
 }
 
 func TestUpdate_Quit(t *testing.T) {
