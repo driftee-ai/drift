@@ -2,18 +2,15 @@ package assessor
 
 import (
 	"fmt"
+
+	"github.com/driftee-ai/drift/pkg/llm"
 )
 
 // New creates a new DocAssessor based on the provided provider name.
 func New(provider string) (DocAssessor, error) {
-	switch provider {
-	case "gemini":
-		return NewGeminiAssessor()
-	case "openai":
-		return NewOpenAIAssessor()
-	case "dummy":
-		return NewDummyAssessor(), nil
-	default:
-		return nil, fmt.Errorf("unknown provider: %s", provider)
+	generator, err := llm.New(provider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create LLM generator: %w", err)
 	}
+	return NewDriftAssessor(generator), nil
 }
