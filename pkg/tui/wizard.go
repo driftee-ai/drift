@@ -5,8 +5,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/driftee-ai/drift/pkg/files"
@@ -18,6 +20,7 @@ type State int
 const (
 	StateLoading State = iota
 	StateDiscovery
+	StateAddingFile
 	StateGrouping
 	StateMapping
 	StateFinalize
@@ -66,6 +69,7 @@ type Model struct {
 	state       State
 	spinner     spinner.Model
 	list        list.Model
+	textInput   textinput.Model
 	err         error
 	width       int
 	height      int
@@ -73,6 +77,7 @@ type Model struct {
 	docFiles    []FileInfo
 	codeFiles   []FileInfo
 	loadingText string
+	feedbackMsg string
 }
 
 // NewModel creates a new Model for the init wizard.
@@ -86,11 +91,24 @@ func NewModel() Model {
 	l := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	l.Title = "Review Documentation Files" // Set initial title
 	l.SetStatusBarItemName("file", "files")
+	l.AdditionalShortHelpKeys = func() []key.Binding {
+		return []key.Binding{
+			key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "add file")),
+			key.NewBinding(key.WithKeys("space"), key.WithHelp("space", "toggle ignore")),
+		}
+	}
+
+	ti := textinput.New()
+	ti.Placeholder = "Enter file path (Tab to complete)"
+	ti.Focus()
+	ti.CharLimit = 156
+	ti.Width = 50
 
 	return Model{
 		state:       StateLoading,
 		spinner:     s,
 		list:        l, // Initialize the list model
+		textInput:   ti,
 		loadingText: "Starting wizard...",
 	}
 }
@@ -108,18 +126,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "ctrl+c":
 			return m, tea.Quit
 		}
 
 		// Handle State-specific keys
 		if m.state == StateDiscovery {
 			switch msg.String() {
+			case "q":
+				return m, tea.Quit
 			case "enter":
 				// Confirm selection and move to next state
 				m.state = StateGrouping
 				// TODO: Initiate Grouping logic here (LLM call)
 				return m, nil
+			case "a":
+				m.state = StateAddingFile
+				m.textInput.SetValue("")
+				m.textInput.Focus()
+				m.feedbackMsg = ""
+				return m, textinput.Blink
 			case " ":
 				// Toggle ignore status
 				if selectedItem, ok := m.list.SelectedItem().(FileInfo); ok {
@@ -130,10 +156,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					// Update in the list
 					m.list.SetItem(index, selectedItem)
 
-					// Update in our local state (find by path to be safe, or just index if synchronized)
-					// Since m.docFiles maps 1:1 to list items initially, we can use index,
-					// BUT list filtering might mess up indices if we enabled filtering.
-					// Ideally we find by path.
+					// Update in our local state
 					for i, f := range m.docFiles {
 						if f.Path == selectedItem.Path {
 							m.docFiles[i].IsIgnored = selectedItem.IsIgnored
@@ -143,6 +166,107 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 					return m, nil
 				}
+			}
+		} else if m.state == StateAddingFile {
+			switch msg.String() {
+			case "esc":
+				m.state = StateDiscovery
+				m.textInput.Blur()
+				m.feedbackMsg = ""
+				return m, nil
+			case "enter":
+				path := m.textInput.Value()
+				path = strings.TrimSpace(path) // basic cleanup
+
+				var fileToAdd FileInfo
+				found := false
+
+				// 1. Check if it's already in our scanned files
+				for _, f := range m.allFiles {
+					if f.Path == path {
+						fileToAdd = f
+						found = true
+						break
+					}
+				}
+
+				// 2. If not found, check the filesystem directly (allows adding ignored files)
+				if !found {
+					info, err := os.Stat(path)
+					if err == nil && !info.IsDir() {
+						fileToAdd = FileInfo{
+							Path: path,
+							Size: info.Size(),
+							Type: TypeDoc, // Force to Doc since user is explicitly adding it
+						}
+						found = true
+					}
+				}
+
+				if found {
+					// Check if already in docFiles to avoid duplicates
+					alreadyInDocs := false
+					for _, f := range m.docFiles {
+						if f.Path == fileToAdd.Path {
+							alreadyInDocs = true
+							break
+						}
+					}
+
+					if !alreadyInDocs {
+						fileToAdd.Type = TypeDoc     // Ensure it's treated as a doc
+						fileToAdd.IsIgnored = false  // Ensure it's active
+						fileToAdd.IsSelected = false // Default state
+
+						m.docFiles = append(m.docFiles, fileToAdd)
+						m.list.InsertItem(len(m.list.Items()), fileToAdd)
+					}
+					m.state = StateDiscovery
+					m.textInput.Blur()
+					m.feedbackMsg = "" // Clear any previous error
+				} else {
+					m.feedbackMsg = fmt.Sprintf("Error: File '%s' not found or is a directory.", path)
+				}
+				return m, nil
+			case "tab":
+				// Autocomplete
+				input := m.textInput.Value()
+				if input == "." || input == "./" {
+					return m, nil // Don't match everything starting with "."
+				}
+
+				cleanInput := strings.TrimPrefix(input, "./")
+				var matches []string
+				for _, f := range m.allFiles {
+					if strings.HasPrefix(f.Path, cleanInput) {
+						matches = append(matches, f.Path)
+					}
+				}
+
+				if len(matches) == 1 {
+					m.textInput.SetValue(matches[0])
+					m.textInput.SetCursor(len(matches[0]))
+					m.feedbackMsg = ""
+				} else if len(matches) > 1 {
+					// Find common prefix
+					common := matches[0]
+					for _, match := range matches[1:] {
+						for !strings.HasPrefix(match, common) {
+							common = common[:len(common)-1]
+						}
+					}
+					m.textInput.SetValue(common)
+					m.textInput.SetCursor(len(common))
+
+					// Show some matches as feedback
+					maxToShow := 3
+					displayMatches := matches
+					if len(matches) > maxToShow {
+						displayMatches = matches[:maxToShow]
+					}
+					m.feedbackMsg = fmt.Sprintf("Matches: %s...", strings.Join(displayMatches, ", "))
+				}
+				return m, nil
 			}
 		}
 
@@ -178,7 +302,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		delegate.Styles.SelectedDesc = delegate.Styles.SelectedDesc.Foreground(lipgloss.Color("205"))
 		m.list.SetDelegate(delegate)
 
-		m.list.Title = "Review Documentation Files" // Re-assert title
+		m.list.Title = fmt.Sprintf("Review Documentation Files (Found %d docs, %d code)", len(m.docFiles), len(m.codeFiles))
 		m.list.SetStatusBarItemName("file", "files")
 
 		m.state = StateDiscovery
@@ -189,6 +313,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Route updates based on state
 	if m.state == StateDiscovery {
 		m.list, cmd = m.list.Update(msg)
+		cmds = append(cmds, cmd)
+	} else if m.state == StateAddingFile {
+		m.textInput, cmd = m.textInput.Update(msg)
 		cmds = append(cmds, cmd)
 	} else {
 		m.spinner, cmd = m.spinner.Update(msg)
@@ -214,6 +341,13 @@ func (m Model) View() string {
 
 	case StateDiscovery:
 		return AppStyle.Render(m.list.View())
+
+	case StateAddingFile:
+		return fmt.Sprintf(
+			"Add a file manually:\n\n%s\n\n%s\n(Esc to cancel, Enter to add, Tab to complete)",
+			m.textInput.View(),
+			m.feedbackMsg,
+		)
 
 	case StateGrouping:
 		s := strings.Builder{}

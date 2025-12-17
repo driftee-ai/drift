@@ -1,12 +1,112 @@
 package tui
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestAutocompleteLogic(t *testing.T) {
+	// Mock file list
+	mockFiles := []FileInfo{
+		{Path: "README.md"},
+		{Path: "cmd/root.go"},
+		{Path: "cmd/init.go"},
+		{Path: "pkg/tui/wizard.go"},
+		{Path: ".gitignore"},
+	}
+
+	tests := []struct {
+		input          string
+		expectedOutput string
+		description    string
+	}{
+		{
+			input:          "REA",
+			expectedOutput: "README.md",
+			description:    "Simple prefix match",
+		},
+		{
+			input:          "cmd",
+			expectedOutput: "cmd/",
+			description:    "Common prefix directory",
+		},
+		{
+			input:          "cmd/",
+			expectedOutput: "cmd/",
+			description:    "Directory prefix already matched",
+		},
+		{
+			input:          "cmd/r",
+			expectedOutput: "cmd/root.go",
+			description:    "File in directory",
+		},
+		{
+			input:          ".",
+			expectedOutput: ".", // Currently, "." doesn't match "README.md" or others based on simple HasPrefix logic unless adjusted
+			description:    "Dot input",
+		},
+		{
+			input:          "./",
+			expectedOutput: "./",
+			description:    "Dot slash input",
+		},
+		{
+			input:          "pkg",
+			expectedOutput: "pkg/tui/wizard.go",
+			description:    "Deep file match",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.description, func(t *testing.T) {
+			// Simulate the logic in Update
+			input := tc.input
+			var result string
+			var matches []string
+
+			if input == "." || input == "./" {
+				result = input
+			} else {
+				cleanInput := strings.TrimPrefix(input, "./")
+
+				for _, f := range mockFiles {
+					if strings.HasPrefix(f.Path, cleanInput) {
+						matches = append(matches, f.Path)
+					}
+				}
+
+				if len(matches) == 1 {
+					result = matches[0]
+				} else if len(matches) > 1 {
+					common := matches[0]
+					for _, match := range matches[1:] {
+						for !strings.HasPrefix(match, common) {
+							common = common[:len(common)-1]
+						}
+					}
+					result = common
+				} else {
+					// No match, result is original input
+					result = input
+				}
+			}
+
+			// Adjust validation
+			if result != tc.expectedOutput {
+				// If expected is empty string (meaning we expect the common prefix of ALL files), handle that:
+				if tc.expectedOutput == "" && len(matches) == len(mockFiles) {
+					// pass
+				} else {
+					t.Errorf("For input '%s', expected '%s', got '%s' (Matches: %v)", tc.input, tc.expectedOutput, result, matches)
+				}
+			}
+		})
+	}
+}
 
 func TestClassifyFiles(t *testing.T) {
 	tests := []struct {
