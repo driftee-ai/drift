@@ -82,17 +82,24 @@ github.com/driftee/drift/
 │   ├── init.go              # 'drift init' command
 │   └── check.go             # 'drift check' command
 ├── pkg/
-│   ├── assessor/            # LLM integration
-│   │   ├── assessor.go      # Interface definition
-│   │   ├── factory.go       # Factory for creating assessors
-│   │   ├── gemini.go        # Google AI implementation
-│   │   └── openai.go        # OpenAI implementation
+│   ├── assessor/            # Assessment logic
+│   │   ├── assessor.go      # DriftAssessor implementation
+│   │   └── factory.go       # Factory for creating assessors
 │   ├── config/              # Config file handling
 │   │   └── config.go
 │   ├── files/               # File searching and reading
 │   │   └── files.go
-│   └── rules/               # Rule filtering logic
-│       └── filter.go
+│   ├── llm/                 # LLM provider abstraction
+│   │   ├── llm.go           # Generator interface
+│   │   ├── factory.go       # Factory for creating generators
+│   │   ├── gemini.go        # Google AI implementation
+│   │   ├── openai.go        # OpenAI implementation
+│   │   └── dummy.go         # Mock implementation for tests
+│   ├── rules/               # Rule filtering logic
+│   │   └── filter.go
+│   └── tui/                 # Terminal UI for interactive commands
+│       ├── wizard.go        # drift init wizard logic
+│       └── styles.go        # TUI styling
 ```
 
 ### Package Details
@@ -104,7 +111,7 @@ Uses Cobra for command-line interface. Contains zero business logic.
 **cmd/root.go** - Defines the root `drift` command.
 
 **cmd/init.go** - Defines `drift init`.
-- Calls `config.CreateScaffold()` from `/pkg/config`.
+- Launches an interactive TUI wizard (via `pkg/tui`) to guide the user through discovery and configuration.
 
 **cmd/check.go** - Defines `drift check`.
 - Reads flags like `--config` and `--changed-files`.
@@ -135,6 +142,13 @@ rules:
   - docs/api/**/*.md
 ```
 
+### `/pkg/tui` - Terminal User Interface
+
+**wizard.go**
+- Implements the Bubble Tea model for the `drift init` wizard.
+- Manages a state machine (`StateDiscovery`, `StateGrouping`, etc.) to guide the user.
+- **StateDiscovery**: Walks the file system using `pkg/files` and allows the user to review/ignore discovered files.
+
 ### `/pkg/rules` - Rule Filtering
 
 **filter.go**
@@ -148,41 +162,38 @@ rules:
 - `FindFiles(globs []string) ([]string, error)`: Takes a slice of glob patterns and returns a list of matching file paths.
 - `ReadFiles(paths []string) (map[string]string, error)`: Reads a list of file paths and returns a map of file paths to their content.
 - `ReadAndConcatenate(paths []string) (string, error)`: Reads a list of file paths and returns their concatenated content.
+- `WalkProject()`: Recursively walks the project directory, respecting `.gitignore` and skipping common non-code directories (e.g., `.git`, `node_modules`).
 
-### `/pkg/assessor` - LLM Interface
+### `/pkg/llm` - LLM Provider Abstraction
 
-**assessor.go** - Core interface definition:
+**llm.go**
+- Defines the `Generator` interface for LLM providers.
+    - `Generate(ctx, prompt)`: Basic text generation.
+    - `GenerateJSON(ctx, prompt, schema, result)`: Structured JSON generation using provider-specific schema mapping.
+- Defines a provider-agnostic `Schema` struct.
 
-```go
-type AssessmentResult struct {
-    IsInSync bool   `json:"is_in_sync"`
-    Reason   string `json:"reason"`
-}
+**factory.go**
+- `New(provider string) (Generator, error)`: Factory for creating specific LLM generators (`gemini`, `openai`, `dummy`).
 
-type DocAssessor interface {
-    Assess(docContent string, codeContents map[string]string) (*AssessmentResult, error)
-}
-```
+### `/pkg/assessor` - Logic Layer
 
-**factory.go** - Contains the factory function for creating assessors.
-`New(provider string) (DocAssessor, error)` - Factory function that reads the provider from the config (`gemini`, `openai`, `dummy`) and returns the correct concrete assessor.
+**assessor.go**
+- `DocAssessor` interface: `Assess(docContent, codeContents)`.
+- `DriftAssessor` struct: Implements `DocAssessor` using an `llm.Generator`.
+    - Handles prompt construction and response parsing for drift detection.
 
-**gemini.go** - Google AI implementation
-- `type GeminiAssessor struct { ... }`
-- `NewGeminiAssessor() *GeminiAssessor` - Reads `GEMINI_API_KEY` from env.
-- `Assess(...)` - Formats Gemini-specific prompt, makes API call, parses JSON response.
-
-**openai.go** - OpenAI implementation
-- `type OpenAIAssessor struct { ... }`
-- `NewOpenAIAssessor() *OpenAIAssessor` - Reads `OPENAI_API_KEY` from env.
-- `Assess(...)` - Formats OpenAI-specific prompt, makes API call.
+**factory.go**
+- `New(provider string) (DocAssessor, error)`: Factory that initializes a `DriftAssessor` with the requested LLM provider.
 
 ### Core Go Libraries
 
 **CLI Dependencies:**
 
 - **cobra** - For CLI commands (`init`, `check`).
+- **bubbletea**, **lipgloss**, **bubbles** - For the interactive TUI wizard.
 - **gopkg.in/yaml.v3** - For reading `.drift.yaml` config.
+- **doublestar** - For glob matching.
+- **go-gitignore** - For respecting `.gitignore` during file discovery.
 - **golangci-lint** - For linting the Go code.
 
 ### End-to-End Testing
