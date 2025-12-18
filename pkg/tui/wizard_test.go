@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/driftee-ai/drift/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -238,4 +239,85 @@ func TestUpdate_Quit(t *testing.T) {
 	// For exact verification, we'd need to mock the tea runtime or check the type,
 	// but mostly we just want to ensure it doesn't panic.
 	assert.NotNil(t, cmd)
+}
+
+func TestUpdate_Grouping(t *testing.T) {
+	m := NewModel()
+
+	// Simulate "Groups Generated" event
+	testGroups := []config.Rule{
+		{Name: "Auth", Docs: []string{"docs/auth.md"}},
+		{Name: "Billing", Docs: []string{"docs/billing.md"}},
+	}
+	msg := groupsGeneratedMsg{groups: testGroups}
+
+	// Call Update
+	newModel, _ := m.Update(msg)
+	newM := newModel.(Model)
+
+	// Assert State Transition
+	assert.Equal(t, StateGrouping, newM.state)
+	assert.Empty(t, newM.loadingText)
+
+	// Assert Data Population
+	assert.Equal(t, 2, len(newM.groups))
+	assert.Equal(t, 2, len(newM.list.Items()))
+	assert.Equal(t, "Auth", newM.list.Items()[0].(RuleItem).Rule.Name)
+}
+
+func TestUpdate_GroupingInteractions(t *testing.T) {
+	m := NewModel()
+	testGroups := []config.Rule{
+		{Name: "Auth", Docs: []string{"docs/auth.md"}},
+	}
+	m.groups = testGroups
+	items := []list.Item{RuleItem{Rule: testGroups[0], Index: 0}}
+	m.list.SetItems(items)
+	m.state = StateGrouping
+
+	// 1. Test Rename ('r')
+	m.list.Select(0)
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("r")}
+	newModel, _ := m.Update(msg)
+	newM := newModel.(Model)
+
+	assert.Equal(t, StateEditingName, newM.state)
+	assert.Equal(t, "Auth", newM.textInput.Value())
+
+	// Simulate typing and enter
+	newM.textInput.SetValue("Authentication")
+	msg = tea.KeyMsg{Type: tea.KeyEnter}
+	newModel, _ = newM.Update(msg)
+	newM = newModel.(Model)
+
+	assert.Equal(t, StateGrouping, newM.state)
+	assert.Equal(t, "Authentication", newM.groups[0].Name)
+	assert.Equal(t, "Authentication", newM.list.Items()[0].(RuleItem).Rule.Name)
+
+	// 2. Test Edit Globs ('e')
+	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("e")}
+	newModel, _ = newM.Update(msg)
+	newM = newModel.(Model)
+
+	assert.Equal(t, StateEditingDocGlobs, newM.state)
+	assert.Equal(t, "docs/auth.md", newM.textInput.Value())
+
+	// Simulate typing new globs
+	newM.textInput.SetValue("docs/auth/*.md, docs/login.md")
+	msg = tea.KeyMsg{Type: tea.KeyEnter}
+	newModel, _ = newM.Update(msg)
+	newM = newModel.(Model)
+
+	assert.Equal(t, StateGrouping, newM.state)
+	assert.Equal(t, 2, len(newM.groups[0].Docs))
+	assert.Contains(t, newM.groups[0].Docs, "docs/auth/*.md")
+	assert.Contains(t, newM.groups[0].Docs, "docs/login.md")
+
+	// 3. Test Delete ('d')
+	msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")}
+	newModel, _ = newM.Update(msg)
+	newM = newModel.(Model)
+
+	assert.Equal(t, 0, len(newM.groups))
+	assert.Equal(t, 0, len(newM.list.Items()))
 }

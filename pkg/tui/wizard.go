@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -11,7 +12,9 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/driftee-ai/drift/pkg/config"
 	"github.com/driftee-ai/drift/pkg/files"
+	"github.com/driftee-ai/drift/pkg/llm"
 )
 
 // State represents the current step of the wizard.
@@ -21,7 +24,10 @@ const (
 	StateLoading State = iota
 	StateDiscovery
 	StateAddingFile
+	StateAnalyzingDocs
 	StateGrouping
+	StateEditingName
+	StateEditingDocGlobs
 	StateMapping
 	StateFinalize
 	StateDone
@@ -64,6 +70,16 @@ func (f FileInfo) Description() string {
 	return fmt.Sprintf("Size: %d bytes", f.Size)
 }
 
+// RuleItem adapts config.Rule to list.Item
+type RuleItem struct {
+	Rule  config.Rule
+	Index int
+}
+
+func (r RuleItem) Title() string       { return r.Rule.Name }
+func (r RuleItem) Description() string { return strings.Join(r.Rule.Docs, ", ") }
+func (r RuleItem) FilterValue() string { return r.Rule.Name }
+
 // Model is the main Bubble Tea model for the init wizard.
 type Model struct {
 	state       State
@@ -76,6 +92,8 @@ type Model struct {
 	allFiles    []FileInfo
 	docFiles    []FileInfo
 	codeFiles   []FileInfo
+	groups      []config.Rule
+	editIndex   int // Index of the rule currently being edited
 	loadingText string
 	feedbackMsg string
 }
@@ -137,9 +155,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			case "enter":
 				// Confirm selection and move to next state
-				m.state = StateGrouping
-				// TODO: Initiate Grouping logic here (LLM call)
-				return m, nil
+				m.state = StateAnalyzingDocs
+				m.loadingText = "Analyzing documentation structure..."
+				return m, tea.Batch(m.spinner.Tick, m.generateGroupsCmd())
 			case "a":
 				m.state = StateAddingFile
 				m.textInput.SetValue("")
@@ -166,6 +184,76 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 					return m, nil
 				}
+			}
+		} else if m.state == StateGrouping {
+			switch msg.String() {
+			case "enter":
+				m.state = StateMapping
+				m.loadingText = "Mapping code to features..."
+				// TODO: Initiate Mapping logic here
+				return m, m.spinner.Tick
+			case "r":
+				if selectedItem, ok := m.list.SelectedItem().(RuleItem); ok {
+					m.state = StateEditingName
+					m.editIndex = m.list.Index()
+					m.textInput.SetValue(selectedItem.Rule.Name)
+					m.textInput.Focus()
+					return m, textinput.Blink
+				}
+			case "e":
+				if selectedItem, ok := m.list.SelectedItem().(RuleItem); ok {
+					m.state = StateEditingDocGlobs
+					m.editIndex = m.list.Index()
+					m.textInput.SetValue(strings.Join(selectedItem.Rule.Docs, ", "))
+					m.textInput.Focus()
+					return m, textinput.Blink
+				}
+			case "d":
+				index := m.list.Index()
+				m.groups = append(m.groups[:index], m.groups[index+1:]...)
+				m.list.RemoveItem(index)
+				return m, nil
+			case "a":
+				newRule := config.Rule{Name: "New Feature", Docs: []string{}}
+				m.groups = append(m.groups, newRule)
+				m.list.InsertItem(len(m.groups)-1, RuleItem{Rule: newRule, Index: len(m.groups) - 1})
+				m.list.Select(len(m.groups) - 1)
+				// Auto-trigger rename
+				m.state = StateEditingName
+				m.editIndex = len(m.groups) - 1
+				m.textInput.SetValue(newRule.Name)
+				m.textInput.Focus()
+				return m, textinput.Blink
+			}
+		} else if m.state == StateEditingName {
+			switch msg.String() {
+			case "esc":
+				m.state = StateGrouping
+				m.textInput.Blur()
+				return m, nil
+			case "enter":
+				m.groups[m.editIndex].Name = m.textInput.Value()
+				m.list.SetItem(m.editIndex, RuleItem{Rule: m.groups[m.editIndex], Index: m.editIndex})
+				m.state = StateGrouping
+				m.textInput.Blur()
+				return m, nil
+			}
+		} else if m.state == StateEditingDocGlobs {
+			switch msg.String() {
+			case "esc":
+				m.state = StateGrouping
+				m.textInput.Blur()
+				return m, nil
+			case "enter":
+				globs := strings.Split(m.textInput.Value(), ",")
+				for i := range globs {
+					globs[i] = strings.TrimSpace(globs[i])
+				}
+				m.groups[m.editIndex].Docs = globs
+				m.list.SetItem(m.editIndex, RuleItem{Rule: m.groups[m.editIndex], Index: m.editIndex})
+				m.state = StateGrouping
+				m.textInput.Blur()
+				return m, nil
 			}
 		} else if m.state == StateAddingFile {
 			switch msg.String() {
@@ -308,13 +396,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state = StateDiscovery
 		m.loadingText = "" // Clear loading text
 		return m, nil
+
+	case groupsGeneratedMsg:
+		m.groups = msg.groups
+		items := make([]list.Item, len(m.groups))
+		for i, g := range m.groups {
+			items[i] = RuleItem{Rule: g, Index: i}
+		}
+		m.list.SetItems(items)
+		m.list.Title = "Review Feature Groups"
+		m.list.SetStatusBarItemName("group", "groups")
+
+		// Reset delegate help keys for grouping state
+		m.list.AdditionalShortHelpKeys = func() []key.Binding {
+			return []key.Binding{
+				key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "rename")),
+				key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit docs")),
+				key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "delete")),
+				key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "add")),
+			}
+		}
+
+		m.state = StateGrouping
+		m.loadingText = ""
+		return m, nil
 	}
 
 	// Route updates based on state
-	if m.state == StateDiscovery {
+	if m.state == StateDiscovery || m.state == StateGrouping {
 		m.list, cmd = m.list.Update(msg)
 		cmds = append(cmds, cmd)
-	} else if m.state == StateAddingFile {
+	} else if m.state == StateAddingFile || m.state == StateEditingName || m.state == StateEditingDocGlobs {
 		m.textInput, cmd = m.textInput.Update(msg)
 		cmds = append(cmds, cmd)
 	} else {
@@ -349,12 +461,27 @@ func (m Model) View() string {
 			m.feedbackMsg,
 		)
 
-	case StateGrouping:
+	case StateAnalyzingDocs:
 		s := strings.Builder{}
 		s.WriteString(HeaderStyle.Width(m.width).Render("Drift Init Wizard"))
 		s.WriteString("\n\n")
-		s.WriteString("Grouping files...\n")
+		s.WriteString(fmt.Sprintf("%s %s\n", m.spinner.View(), m.loadingText))
 		return AppStyle.Render(s.String())
+
+	case StateGrouping:
+		return AppStyle.Render(m.list.View())
+
+	case StateEditingName:
+		return fmt.Sprintf(
+			"Rename Feature:\n\n%s\n\n(Esc to cancel, Enter to save)",
+			m.textInput.View(),
+		)
+
+	case StateEditingDocGlobs:
+		return fmt.Sprintf(
+			"Edit Doc Globs (comma separated):\n\n%s\n\n(Esc to cancel, Enter to save)",
+			m.textInput.View(),
+		)
 
 	case StateMapping:
 		s := strings.Builder{}
@@ -412,6 +539,78 @@ func discoverFilesCmd() tea.Cmd {
 			})
 		}
 		return filesDiscoveredMsg{allFiles: allFiles}
+	}
+}
+
+type groupsGeneratedMsg struct {
+	groups []config.Rule
+}
+
+func (m Model) generateGroupsCmd() tea.Cmd {
+	return func() tea.Msg {
+		// Collect selected doc files
+		var docPaths []string
+		for _, f := range m.docFiles {
+			if !f.IsIgnored {
+				docPaths = append(docPaths, f.Path)
+			}
+		}
+
+		if len(docPaths) == 0 {
+			// Fallback if no docs selected
+			return groupsGeneratedMsg{groups: []config.Rule{{Name: "All Docs", Docs: []string{"**/*.md"}}}}
+		}
+
+		// Try to use LLM
+		gen, err := llm.New("gemini")
+		if err != nil {
+			// Fallback: Group everything into one
+			return groupsGeneratedMsg{groups: []config.Rule{{Name: "General Documentation", Docs: []string{"**/*.md"}}}}
+		}
+
+		// Prepare prompt
+		prompt := fmt.Sprintf(`You are a software architect. I will provide a list of documentation files. Please group them into logical features (e.g., 'Authentication', 'Billing', 'API').
+
+Requirements:
+1. Create a 'General' group for generic files (README, contributing, etc) if they exist.
+2. For each group, provide a short 'name' and a list of 'docs' glob patterns (e.g., 'docs/auth/**/*.md') that cover the files in that group. Use wildcards ('*', '**') effectively to be robust for future files.
+3. Return valid JSON matching the requested schema.
+
+Files:
+%s`, strings.Join(docPaths, "\n"))
+
+		schema := &llm.Schema{
+			Type: llm.TypeObject,
+			Properties: map[string]*llm.Schema{
+				"groups": {
+					Type: llm.TypeArray,
+					Items: &llm.Schema{
+						Type: llm.TypeObject,
+						Properties: map[string]*llm.Schema{
+							"name": {Type: llm.TypeString},
+							"docs": {
+								Type:  llm.TypeArray,
+								Items: &llm.Schema{Type: llm.TypeString},
+							},
+						},
+						Required: []string{"name", "docs"},
+					},
+				},
+			},
+			Required: []string{"groups"},
+		}
+
+		type response struct {
+			Groups []config.Rule `json:"groups"`
+		}
+		var resp response
+		err = gen.GenerateJSON(context.Background(), prompt, schema, &resp)
+		if err != nil {
+			// Fallback on error
+			return groupsGeneratedMsg{groups: []config.Rule{{Name: "General Documentation", Docs: []string{"**/*.md"}}}}
+		}
+
+		return groupsGeneratedMsg{groups: resp.Groups}
 	}
 }
 

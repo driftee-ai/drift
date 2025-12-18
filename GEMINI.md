@@ -2,6 +2,11 @@
 
 This document provides technical details and implementation guidance for our products.
 
+## General Principles
+
+- **Planning First:** Before implementing any feature or performing complex refactoring, a detailed plan must be formulated and presented to the user for approval. No code should be written until the plan is approved.
+- **Verification After:** Upon completing a feature, bug fix, or any stage of a multi-step plan, always execute the full project verification suite (e.g., `make test integration-test lint build`) to ensure system integrity and performance.
+
 ## Tech Stack Overview
 
 ### Open-Source CLI
