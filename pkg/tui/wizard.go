@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/driftee-ai/drift/pkg/config"
 	"github.com/driftee-ai/drift/pkg/files"
 	"github.com/driftee-ai/drift/pkg/llm"
+	"gopkg.in/yaml.v3"
 )
 
 // State represents the current step of the wizard.
@@ -28,6 +30,7 @@ const (
 	StateGrouping
 	StateEditingName
 	StateEditingDocGlobs
+	StateEditingCodeGlobs
 	StateMapping
 	StateFinalize
 	StateDone
@@ -79,6 +82,16 @@ type RuleItem struct {
 func (r RuleItem) Title() string       { return r.Rule.Name }
 func (r RuleItem) Description() string { return strings.Join(r.Rule.Docs, ", ") }
 func (r RuleItem) FilterValue() string { return r.Rule.Name }
+
+// MappingItem adapts config.Rule to list.Item for mapping view
+type MappingItem struct {
+	Rule  config.Rule
+	Index int
+}
+
+func (m MappingItem) Title() string       { return m.Rule.Name }
+func (m MappingItem) Description() string { return strings.Join(m.Rule.Code, ", ") }
+func (m MappingItem) FilterValue() string { return m.Rule.Name }
 
 // Model is the main Bubble Tea model for the init wizard.
 type Model struct {
@@ -149,6 +162,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		// Handle State-specific keys
+		if m.state == StateDone {
+			if msg.String() == "q" || msg.String() == "enter" {
+				return m, tea.Quit
+			}
+		}
+
 		if m.state == StateDiscovery {
 			switch msg.String() {
 			case "q":
@@ -188,10 +207,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else if m.state == StateGrouping {
 			switch msg.String() {
 			case "enter":
-				m.state = StateMapping
+				m.state = StateAnalyzingDocs
 				m.loadingText = "Mapping code to features..."
-				// TODO: Initiate Mapping logic here
-				return m, m.spinner.Tick
+				return m, tea.Batch(m.spinner.Tick, m.generateMappingsCmd())
 			case "r":
 				if selectedItem, ok := m.list.SelectedItem().(RuleItem); ok {
 					m.state = StateEditingName
@@ -252,6 +270,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.groups[m.editIndex].Docs = globs
 				m.list.SetItem(m.editIndex, RuleItem{Rule: m.groups[m.editIndex], Index: m.editIndex})
 				m.state = StateGrouping
+				m.textInput.Blur()
+				return m, nil
+			}
+		} else if m.state == StateMapping {
+			switch msg.String() {
+			case "enter":
+				m.state = StateFinalize
+				return m, tea.Batch(m.spinner.Tick, m.finalizeConfigCmd())
+			case "e":
+				if selectedItem, ok := m.list.SelectedItem().(MappingItem); ok {
+					m.state = StateEditingCodeGlobs
+					m.editIndex = m.list.Index()
+					m.textInput.SetValue(strings.Join(selectedItem.Rule.Code, ", "))
+					m.textInput.Focus()
+					return m, textinput.Blink
+				}
+			}
+		} else if m.state == StateEditingCodeGlobs {
+			switch msg.String() {
+			case "esc":
+				m.state = StateMapping
+				m.textInput.Blur()
+				return m, nil
+			case "enter":
+				globs := strings.Split(m.textInput.Value(), ",")
+				for i := range globs {
+					globs[i] = strings.TrimSpace(globs[i])
+				}
+				m.groups[m.editIndex].Code = globs
+				m.list.SetItem(m.editIndex, MappingItem{Rule: m.groups[m.editIndex], Index: m.editIndex})
+				m.state = StateMapping
 				m.textInput.Blur()
 				return m, nil
 			}
@@ -420,13 +469,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state = StateGrouping
 		m.loadingText = ""
 		return m, nil
+
+	case mappingsGeneratedMsg:
+		m.groups = msg.groups
+		items := make([]list.Item, len(m.groups))
+		for i, g := range m.groups {
+			items[i] = MappingItem{Rule: g, Index: i}
+		}
+		m.list.SetItems(items)
+		m.list.Title = "Review Code Mappings"
+		m.list.SetStatusBarItemName("group", "groups")
+
+		m.list.AdditionalShortHelpKeys = func() []key.Binding {
+			return []key.Binding{
+				key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit code")),
+			}
+		}
+
+		m.state = StateMapping
+		m.loadingText = ""
+		return m, nil
+
+	case configSavedMsg:
+		m.state = StateDone
+		return m, nil
 	}
 
 	// Route updates based on state
-	if m.state == StateDiscovery || m.state == StateGrouping {
+	if m.state == StateDiscovery || m.state == StateGrouping || m.state == StateMapping {
 		m.list, cmd = m.list.Update(msg)
 		cmds = append(cmds, cmd)
-	} else if m.state == StateAddingFile || m.state == StateEditingName || m.state == StateEditingDocGlobs {
+	} else if m.state == StateAddingFile || m.state == StateEditingName || m.state == StateEditingDocGlobs || m.state == StateEditingCodeGlobs {
 		m.textInput, cmd = m.textInput.Update(msg)
 		cmds = append(cmds, cmd)
 	} else {
@@ -483,12 +556,14 @@ func (m Model) View() string {
 			m.textInput.View(),
 		)
 
+	case StateEditingCodeGlobs:
+		return fmt.Sprintf(
+			"Edit Code Globs (comma separated):\n\n%s\n\n(Esc to cancel, Enter to save)",
+			m.textInput.View(),
+		)
+
 	case StateMapping:
-		s := strings.Builder{}
-		s.WriteString(HeaderStyle.Width(m.width).Render("Drift Init Wizard"))
-		s.WriteString("\n\n")
-		s.WriteString("Mapping files...\n")
-		return AppStyle.Render(s.String())
+		return AppStyle.Render(m.list.View())
 
 	case StateFinalize:
 		s := strings.Builder{}
@@ -545,6 +620,12 @@ func discoverFilesCmd() tea.Cmd {
 type groupsGeneratedMsg struct {
 	groups []config.Rule
 }
+
+type mappingsGeneratedMsg struct {
+	groups []config.Rule
+}
+
+type configSavedMsg struct{}
 
 func (m Model) generateGroupsCmd() tea.Cmd {
 	return func() tea.Msg {
@@ -678,4 +759,127 @@ func classifyFiles(allFiles []FileInfo) ([]FileInfo, []FileInfo) {
 	}
 
 	return docFiles, codeFiles
+}
+
+func (m Model) generateMappingsCmd() tea.Cmd {
+	return func() tea.Msg {
+		// Collect all code files
+		var codePaths []string
+		for _, f := range m.codeFiles {
+			// Limit the number of files sent to LLM to avoid context window issues
+			// for now we set a safe limit, e.g., 500
+			if len(codePaths) < 500 {
+				codePaths = append(codePaths, f.Path)
+			}
+		}
+
+		// Prepare prompt
+		// We send the existing groups (Name + Docs) and the list of code files.
+		type GroupStub struct {
+			Name string   `json:"name"`
+			Docs []string `json:"docs"`
+		}
+		var groupStubs []GroupStub
+		for _, g := range m.groups {
+			groupStubs = append(groupStubs, GroupStub{Name: g.Name, Docs: g.Docs})
+		}
+
+		groupsJSON, _ := json.Marshal(groupStubs)
+
+		prompt := fmt.Sprintf(`You are a software architect. I will provide a list of code files and a set of feature groups (defined by their name and documentation). 
+Please identify which code files likely belong to each feature group.
+
+Requirements:
+1. For each group, provide a list of 'code' glob patterns (e.g., 'src/auth/**/*.go') that cover the implementation of that feature.
+2. Use wildcards ('*', '**') effectively.
+3. If a group seems to have no corresponding code (e.g., general docs), leave the code list empty.
+4. Return valid JSON matching the requested schema.
+
+Feature Groups:
+%s
+
+Code Files:
+%s`, string(groupsJSON), strings.Join(codePaths, "\n"))
+
+		schema := &llm.Schema{
+			Type: llm.TypeObject,
+			Properties: map[string]*llm.Schema{
+				"mappings": {
+					Type: llm.TypeArray,
+					Items: &llm.Schema{
+						Type: llm.TypeObject,
+						Properties: map[string]*llm.Schema{
+							"name": {Type: llm.TypeString},
+							"code": {
+								Type:  llm.TypeArray,
+								Items: &llm.Schema{Type: llm.TypeString},
+							},
+						},
+						Required: []string{"name", "code"},
+					},
+				},
+			},
+			Required: []string{"mappings"},
+		}
+
+		gen, err := llm.New("gemini")
+		if err != nil {
+			// Fallback: return existing groups without code
+			return mappingsGeneratedMsg{groups: m.groups}
+		}
+
+		type mapping struct {
+			Name string   `json:"name"`
+			Code []string `json:"code"`
+		}
+		type response struct {
+			Mappings []mapping `json:"mappings"`
+		}
+		var resp response
+		err = gen.GenerateJSON(context.Background(), prompt, schema, &resp)
+		if err != nil {
+			return mappingsGeneratedMsg{groups: m.groups}
+		}
+
+		// Merge results back into m.groups
+		// We match by Name.
+		newGroups := make([]config.Rule, len(m.groups))
+		copy(newGroups, m.groups)
+
+		for _, mapItem := range resp.Mappings {
+			for i, g := range newGroups {
+				if g.Name == mapItem.Name {
+					newGroups[i].Code = mapItem.Code
+					break
+				}
+			}
+		}
+
+		return mappingsGeneratedMsg{groups: newGroups}
+	}
+}
+
+func (m Model) finalizeConfigCmd() tea.Cmd {
+	return func() tea.Msg {
+		conf := config.Config{
+			Version:  1,
+			Provider: "gemini",
+			Rules:    m.groups,
+		}
+
+		data, err := yaml.Marshal(conf)
+		if err != nil {
+			return errMsg{err}
+		}
+
+		// Add comments
+		commentedData := []byte("# .drift.yaml\n# This file defines the rules for checking drift between your code and documentation.\n# Generated by drift init.\n\n" + string(data))
+
+		err = os.WriteFile(".drift.yaml", commentedData, 0644)
+		if err != nil {
+			return errMsg{err}
+		}
+
+		return configSavedMsg{}
+	}
 }

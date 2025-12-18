@@ -28,7 +28,7 @@ func NewGeminiGenerator() (*GeminiGenerator, error) {
 		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
 
-	model := client.GenerativeModel("gemini-2.5-flash")
+	model := client.GenerativeModel("gemini-3-flash-preview")
 	return &GeminiGenerator{client: model}, nil
 }
 

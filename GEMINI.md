@@ -1,3 +1,7 @@
+# Operational Guidelines
+
+- **Git Management:** The user handles git operations manually. Do not run git commands (e.g., `git add`, `git commit`).
+
 # Technical Implementation
 
 This document provides technical details and implementation guidance for our products.
@@ -5,7 +9,7 @@ This document provides technical details and implementation guidance for our pro
 ## General Principles
 
 - **Planning First:** Before implementing any feature or performing complex refactoring, a detailed plan must be formulated and presented to the user for approval. No code should be written until the plan is approved.
-- **Verification After:** Upon completing a feature, bug fix, or any stage of a multi-step plan, always execute the full project verification suite (e.g., `make test integration-test lint build`) to ensure system integrity and performance.
+- **Verification After:** Upon completing a feature, bug fix, or any stage of a multi-step plan, always execute the full project verification suite using `make verify` to ensure system integrity and performance.
 
 ## Tech Stack Overview
 
@@ -153,6 +157,7 @@ rules:
 - Implements the Bubble Tea model for the `drift init` wizard.
 - Manages a state machine (`StateDiscovery`, `StateGrouping`, etc.) to guide the user.
 - **StateDiscovery**: Walks the file system using `pkg/files` and allows the user to review/ignore discovered files.
+- **StateGrouping**: Uses LLM to organize documentation into logical features and allows the user to refine groups (rename, edit globs, add/remove).
 
 ### `/pkg/rules` - Rule Filtering
 
