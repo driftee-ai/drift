@@ -1,9 +1,47 @@
+# .drift.yaml
+# This file defines the rules for checking drift between your code and documentation.
+
 version: 1
 provider: gemini
 rules:
-  - name: "CLI Usage Documentation"
+  - name: General
     code:
-      - "cmd/**.go"
+      - main.go
+      - cmd/root.go
+      - cmd/check.go
+      - pkg/tui/**/*.go
+      - docs/**/*.jsx
+      - docs/**/*.js
+      - docs/**/*.json
+      - docs/**/*.html
     docs:
-      - "README.md"
-      - "docs/**/*.mdx"
+      - "*.md"
+      - docs/content/index.mdx
+      - docs/content/contributing.mdx
+  - name: Setup & Configuration
+    code:
+      - cmd/init.go
+      - pkg/config/**/*.go
+      - .drift.yaml
+      - .golangci.yml
+      - .goreleaser.yml
+    docs:
+      - docs/content/installation.mdx
+      - docs/content/configuration.mdx
+  - name: API Reference
+    code:
+      - pkg/assessor/**/*.go
+      - pkg/files/**/*.go
+      - pkg/rules/**/*.go
+      - pkg/llm/llm.go
+    docs:
+      - docs/content/api/**/*.mdx
+  - name: Integrations
+    code:
+      - .github/workflows/*.yml
+      - pkg/llm/gemini.go
+      - pkg/llm/openai.go
+      - pkg/llm/factory.go
+    docs:
+      - docs/content/ci-cd.mdx
+      - docs/content/providers.mdx
