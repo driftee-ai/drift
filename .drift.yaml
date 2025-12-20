@@ -4,44 +4,25 @@
 version: 1
 provider: gemini
 rules:
-  - name: General
-    code:
-      - main.go
-      - cmd/root.go
-      - cmd/check.go
-      - pkg/tui/**/*.go
-      - docs/**/*.jsx
-      - docs/**/*.js
-      - docs/**/*.json
-      - docs/**/*.html
-    docs:
-      - "*.md"
-      - docs/content/index.mdx
-      - docs/content/contributing.mdx
-  - name: Setup & Configuration
+  - name: Getting Started
     code:
       - cmd/init.go
       - pkg/config/**/*.go
-      - .drift.yaml
-      - .golangci.yml
-      - .goreleaser.yml
+      - pkg/tui/wizard*.go
     docs:
       - docs/content/installation.mdx
       - docs/content/configuration.mdx
   - name: API Reference
     code:
+      - main.go
+      - cmd/**/*.go
       - pkg/assessor/**/*.go
-      - pkg/files/**/*.go
       - pkg/rules/**/*.go
-      - pkg/llm/llm.go
     docs:
       - docs/content/api/**/*.mdx
-  - name: Integrations
+  - name: Features & Integrations
     code:
-      - .github/workflows/*.yml
-      - pkg/llm/gemini.go
-      - pkg/llm/openai.go
-      - pkg/llm/factory.go
+      - pkg/llm/**/*.go
     docs:
       - docs/content/ci-cd.mdx
       - docs/content/providers.mdx
