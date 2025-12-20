@@ -1,9 +1,14 @@
 # `drift init`
 
-This command initializes a new project by creating a `.drift.yaml` configuration file in the current directory.
+This command initializes a new project by launching an interactive wizard that helps you discover documentation and code, group them into rules, and generate a `.drift.yaml` configuration file.
 
 ```bash
 drift init
 ```
 
-This will create a `.drift.yaml` file with some example configuration to get you started.
+The wizard progresses through several stages:
+
+1.  **Discovery:** Scans your project for documentation and code files (respecting `.gitignore`). You can manually review, ignore, or add files to the list.
+2.  **Grouping:** Uses an LLM to analyze your documentation files and suggest logical feature groups (rules). You can rename, add, or delete these groups.
+3.  **Mapping:** Uses an LLM to associate your code files with the defined feature groups. You can refine the glob patterns for the code files associated with each rule.
+4.  **Finalize:** Generates the `.drift.yaml` file based on your approved configuration.

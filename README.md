@@ -30,7 +30,7 @@ drift --version
 
 ### `drift init`
 
-Initializes a new project by creating a `.drift.yaml` configuration file in the current directory.
+Initializes a new project by launching an interactive wizard that helps you discover documentation and code, group them into rules, and generate a `.drift.yaml` configuration file.
 
 ```bash
 drift init
@@ -117,6 +117,7 @@ Please see our [Contributing Guidelines](CONTRIBUTING.md) for more information.
 
 Here's a quick guide to get you started:
 
+- **Run all checks:** `make verify`
 - **Run tests:** `make test`
 - **Run linter:** `make lint`
 

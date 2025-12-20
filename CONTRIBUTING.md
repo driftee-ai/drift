@@ -46,14 +46,21 @@ We love pull requests! Here's a quick guide to get you started:
 
 ### Running Tests and Linters
 
-To run the tests:
+We provide a `verify` target in the `Makefile` to run all tests, linters, and integration checks. It is recommended to run this before submitting a pull request.
 
 ```bash
-make test
+make verify
 ```
 
-To run the linter:
+Alternatively, you can run specific checks:
 
 ```bash
+# Run tests
+make test
+
+# Run linter
 make lint
+
+# Run integration tests
+make integration-test
 ```
