@@ -21,3 +21,9 @@ export OPENAI_API_KEY="your-api-key"
 ```
 
 You can obtain an OpenAI API key from the [OpenAI Platform](https://platform.openai.com/).
+
+## Dummy
+
+The `dummy` provider is a mock provider intended for testing and development purposes. It does not call any external API and returns static or random responses. This is useful for verifying your configuration or CI/CD pipeline without consuming API credits.
+
+To use it, set the provider to `dummy` in your configuration or during `drift init`.

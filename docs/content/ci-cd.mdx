@@ -25,6 +25,17 @@ jobs:
         with:
           # Ensure your API key is stored in GitHub Secrets
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+
+#### Using OpenAI
+
+If you are using the OpenAI provider, provide the `open-ai-key` input instead:
+
+```yaml
+      - name: Run Drift
+        uses: driftee-ai/drift-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+```
 ```
 
 ### Optimized Usage (Recommended)

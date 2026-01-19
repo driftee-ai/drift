@@ -42,4 +42,19 @@ var (
 	ActiveButtonStyle = ButtonStyle.
 				Foreground(lipgloss.Color("236")).
 				Background(HighlightColor)
+
+	// Input Styles
+	InputStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("62")).
+			Padding(0, 1).
+			Width(40)
+
+	FocusedInputStyle = InputStyle.
+				BorderForeground(HighlightColor)
+
+	ErrorStyle = lipgloss.NewStyle().
+			Foreground(RedColor).
+			PaddingLeft(1).
+			PaddingTop(1)
 )
