@@ -37,6 +37,9 @@ func NewFinalizePage(s *Session, w, h int) *FinalizePage {
 }
 
 func (p *FinalizePage) Init() tea.Cmd {
+	if p.isDone || p.err != nil {
+		return nil
+	}
 	return tea.Batch(
 		p.spinner.Tick,
 		p.saveConfigCmd(),

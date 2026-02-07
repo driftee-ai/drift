@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -9,7 +10,7 @@ type MainModel struct {
 	layout      LayoutModel
 	currentPage Page
 	pageIndex   int
-	pages       []func(*Session, int, int) Page // Factory functions
+	pages       []Page
 
 	width    int
 	height   int
@@ -23,12 +24,12 @@ func NewModel() MainModel {
 	return MainModel{
 		session: session,
 		layout:  layout,
-		pages: []func(*Session, int, int) Page{
-			func(s *Session, w, h int) Page { return NewDiscoveryPage(s, w, h) },
-			func(s *Session, w, h int) Page { return NewProviderPage(s, w, h) },
-			func(s *Session, w, h int) Page { return NewGroupingPage(s, w, h) },
-			func(s *Session, w, h int) Page { return NewMappingPage(s, w, h) },
-			func(s *Session, w, h int) Page { return NewFinalizePage(s, w, h) },
+		pages: []Page{
+			NewDiscoveryPage(session, 0, 0),
+			NewProviderPage(session, 0, 0),
+			NewGroupingPage(session, 0, 0),
+			NewMappingPage(session, 0, 0),
+			NewFinalizePage(session, 0, 0),
 		},
 	}
 }
@@ -44,25 +45,56 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		m.layout.SetSize(msg.Width, msg.Height)
 
+		m.layout.SetSize(msg.Width, msg.Height)
+
+		// Propagate resize to all pages
+		var cmds []tea.Cmd
+		for i, page := range m.pages {
+			var cmd tea.Cmd
+			m.pages[i], cmd = page.Update(msg)
+			if cmd != nil {
+				cmds = append(cmds, cmd)
+			}
+		}
+
 		if m.currentPage == nil && len(m.pages) > 0 {
 			// Initialize first page
-			m.currentPage = m.pages[0](m.session, m.width, m.height)
-			return m, m.currentPage.Init()
+			m.currentPage = m.pages[0]
+			cmds = append(cmds, m.currentPage.Init())
 		}
+		return m, tea.Batch(cmds...)
 
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+c" {
 			m.quitting = true
 			return m, tea.Quit
 		}
+		// Global Back handlers
+		// Note: We should be careful not to override page-specific controls if they use these keys.
+		// Most pages use 'esc' for cancelling internal states (editing, adding).
+		// We can check if the current page handled the message or not, but Bubble Tea
+		// doesn't support that easily (Update consummates the msg).
+		// For now, let's bind 'ctrl+b' as a safe global back.
+		if msg.String() == "ctrl+b" {
+			return m.Update(PrevStepMsg{})
+		}
 
 	case NextStepMsg:
 		m.pageIndex++
 		if m.pageIndex < len(m.pages) {
-			m.currentPage = m.pages[m.pageIndex](m.session, m.width, m.height)
+			m.currentPage = m.pages[m.pageIndex]
 			return m, m.currentPage.Init()
 		}
 		return m, tea.Quit // Done
+
+	case PrevStepMsg:
+		if m.pageIndex > 0 {
+			m.pageIndex--
+			m.currentPage = m.pages[m.pageIndex]
+			// We might want to re-init or just let it be.
+			// Calling Init() again might be useful for some pages to refresh data.
+			return m, m.currentPage.Init()
+		}
 	}
 
 	if m.currentPage != nil {
@@ -84,10 +116,16 @@ func (m MainModel) View() string {
 		return "Initializing..."
 	}
 
+	keys := m.currentPage.Keys()
+	if m.pageIndex > 0 {
+		keys = append(keys, key.NewBinding(key.WithKeys("ctrl+b"), key.WithHelp("ctrl+b", "back")))
+	}
+	keys = append(keys, key.NewBinding(key.WithKeys("ctrl+c"), key.WithHelp("ctrl+c", "quit")))
+
 	return m.layout.RenderWithLayout(
 		m.currentPage.Title(),
 		m.currentPage.Step(),
-		m.currentPage.Keys(),
+		keys,
 		m.currentPage.View(),
 	)
 }

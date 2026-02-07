@@ -57,6 +57,11 @@ func NewGroupingPage(s *Session, w, h int) *GroupingPage {
 }
 
 func (p *GroupingPage) Init() tea.Cmd {
+	if len(p.session.Groups) > 0 {
+		p.isLoading = false
+		p.refreshList()
+		return nil
+	}
 	return tea.Batch(
 		p.spinner.Tick,
 		p.generateGroupsCmd(),
@@ -136,6 +141,11 @@ func (p *GroupingPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 			p.list.Select(len(p.session.Groups) - 1)
 			p.startEditName(len(p.session.Groups) - 1)
 			return p, textinput.Blink
+
+		case "ctrl+r":
+			p.isLoading = true
+			p.session.Groups = []config.Rule{} // Clear existing
+			return p, tea.Batch(p.spinner.Tick, p.generateGroupsCmd())
 		}
 
 	case tea.WindowSizeMsg:
@@ -199,7 +209,9 @@ func (p *GroupingPage) Keys() []key.Binding {
 		key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "rename")),
 		key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit docs")),
 		key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "delete")),
+		key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "delete")),
 		key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "add")),
+		key.NewBinding(key.WithKeys("ctrl+r"), key.WithHelp("ctrl+r", "regenerate")),
 	}
 }
 

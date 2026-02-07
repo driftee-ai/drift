@@ -56,6 +56,12 @@ func NewMappingPage(s *Session, w, h int) *MappingPage {
 }
 
 func (p *MappingPage) Init() tea.Cmd {
+	// Simple check: if we have groups and the first one has code mapped, assume done.
+	// Or just check if isLoading was set to false previously.
+	if !p.isLoading {
+		return nil
+	}
+	// Initial load
 	return tea.Batch(
 		p.spinner.Tick,
 		p.generateMappingsCmd(),
@@ -109,6 +115,9 @@ func (p *MappingPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 				p.startEditCode(idx)
 				return p, textinput.Blink
 			}
+		case "ctrl+r":
+			p.isLoading = true
+			return p, tea.Batch(p.spinner.Tick, p.generateMappingsCmd())
 		}
 
 	case tea.WindowSizeMsg:
@@ -162,6 +171,7 @@ func (p *MappingPage) Keys() []key.Binding {
 	return []key.Binding{
 		key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "next")),
 		key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit code")),
+		key.NewBinding(key.WithKeys("ctrl+r"), key.WithHelp("ctrl+r", "regenerate")),
 	}
 }
 
