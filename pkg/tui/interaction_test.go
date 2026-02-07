@@ -43,10 +43,8 @@ func (m *MockGenerator) GenerateJSON(ctx context.Context, prompt string, schema 
 		// But in Go `result` is `any` (likely a pointer).
 
 		val, _ := json.Marshal(groupsResp)
-		if err := json.Unmarshal(val, result); err == nil {
-			// Check if it actually worked (e.g. Groups is not empty if it was a groups request)
-			// This is tricky because both might unmarshal without error if fields are ignored.
-			// Let's rely on the pages being sequential.
+		if err := json.Unmarshal(val, result); err != nil {
+			return err
 		}
 
 		// This generic mock is a bit messy. Let's make it smarter based on the prompt.
@@ -122,14 +120,29 @@ func TestWizardInteraction_HappyPath(t *testing.T) {
 	if err := os.Chdir(tmpDir); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chdir(oldWd)
+	defer func() {
+		if err := os.Chdir(oldWd); err != nil {
+			t.Logf("failed to restore working directory: %v", err)
+		}
+	}()
 
 	// Create dummy files for discovery
-	os.Mkdir("docs", 0755)
-	os.Mkdir("src", 0755)
-	os.WriteFile("docs/feature.md", []byte("doc content"), 0644)
-	os.WriteFile("src/feature.go", []byte("code content"), 0644)
-	os.WriteFile("README.md", []byte("readme"), 0644)
+	// Create dummy files for discovery
+	if err := os.Mkdir("docs", 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir("src", 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile("docs/feature.md", []byte("doc content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile("src/feature.go", []byte("code content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile("README.md", []byte("readme"), 0644); err != nil {
+		t.Fatal(err)
+	}
 
 	// 3. Initialize Model
 	m := NewModel()
@@ -267,11 +280,4 @@ func TestWizardInteraction_HappyPath(t *testing.T) {
 	m = model.(MainModel)
 
 	assert.Contains(t, m.View(), "saved")
-}
-
-func containsString(s string, substr string) bool {
-	// Helper to avoid importing strings everywhere if not needed,
-	// but we should import strings.
-	// added to imports
-	return false
 }
