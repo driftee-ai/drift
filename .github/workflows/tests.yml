@@ -22,7 +22,7 @@ jobs:
 
   eval:
     runs-on: ubuntu-latest
-    if: "contains(github.event.head_commit.message, '[run eval]')"
+    if: "contains(github.event.head_commit.message, '[run eval]') || contains(github.event.pull_request.title, '[run eval]') || contains(github.event.pull_request.body, '[run eval]')"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
