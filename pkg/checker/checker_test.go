@@ -30,12 +30,12 @@ func TestEvaluateRules_MalformedJSON(t *testing.T) {
 
 	rule := config.Rule{
 		Name: "Test Rule",
-		// In a real test, creating fixture files would be needed. 
-		// Since files.FindFiles hits the real filesystem, if we don't have files it will error or skip. 
+		// In a real test, creating fixture files would be needed.
+		// Since files.FindFiles hits the real filesystem, if we don't have files it will error or skip.
 		// For true isolation, pkg/files should also be an interface, but we will test the parsing logic directly
 		// by relying on the fact that if a rule fails file reading, it returns an error.
 	}
-	
+
 	// Because files.FindFiles hits the real filesystem, we can't easily test the full loop without testdata/ fixtures.
 	// But let's create a minimal testdata structure for this test if needed.
 	_ = rule

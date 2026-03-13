@@ -69,7 +69,7 @@ func (c *Checker) EvaluateRules(ctx context.Context, rules []config.Rule, diffOn
 			results = append(results, result)
 			continue
 		}
-		
+
 		codeStr := ""
 		totalCodeSize := 0
 		for path, content := range codeContents {

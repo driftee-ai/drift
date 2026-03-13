@@ -129,7 +129,7 @@ And here is the code:
 				Reason              string `json:"reason"`
 				IsDriftCausedByDiff *bool  `json:"is_drift_caused_by_diff,omitempty"`
 			}
-			
+
 			cleanJson := strings.TrimPrefix(strings.TrimSpace(jsonRes), "```json")
 			cleanJson = strings.TrimPrefix(cleanJson, "```")
 			cleanJson = strings.TrimSuffix(cleanJson, "```")
@@ -141,7 +141,7 @@ And here is the code:
 			}
 
 			actualHasDrift := !result.IsInSync
-			
+
 			// Scoring logic
 			if actualHasDrift && tc.Expected.HasDrift {
 				truePositives++
@@ -161,7 +161,7 @@ And here is the code:
 				} else {
 					actualDiffCausedDrift := *result.IsDriftCausedByDiff
 					expectedDiffCausedDrift := *tc.Expected.DiffCausedDrift
-					
+
 					if actualDiffCausedDrift && expectedDiffCausedDrift {
 						diffTruePositives++
 					} else if actualDiffCausedDrift && !expectedDiffCausedDrift {
@@ -231,7 +231,7 @@ And here is the code:
 			fmt.Printf("Diff Recall:      %.4f\n", diffRecall)
 			fmt.Printf("Diff F1 Score:    %.4f\n", diffF1)
 		}
-		
+
 		fmt.Printf("====================\n")
 	})
 }

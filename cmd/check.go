@@ -88,7 +88,7 @@ var checkCmd = &cobra.Command{
 				fmt.Printf("    Result: Skipped (no code or doc files found)\n")
 				continue
 			}
-			
+
 			if result.Error != nil {
 				fmt.Printf("    Error: %v\n", result.Error)
 				allInSync = false
