@@ -88,7 +88,7 @@ func TestCheckCommand_CatchesMissingParam(t *testing.T) {
 	t.Log("Running live Gemini API test: CatchesMissingParam") // Added log
 
 	// Run the check command with the config file for the drift example
-	cmd := exec.Command("./"+testBinaryName, "check", "--config", "testdata/e2e/true_positives/missing_param_in_docs/.drift.yaml")
+	cmd := exec.Command("./" + testBinaryName, "check", "--config", "testdata/e2e/true_positives/missing_param_in_docs/.drift.yaml")
 	cmd.Env = append(os.Environ(), "GEMINI_API_KEY="+os.Getenv("GEMINI_API_KEY"))
 
 	output, err := cmd.CombinedOutput()
@@ -107,7 +107,7 @@ func TestCheckCommand_CatchesMissingParam(t *testing.T) {
 
 func TestCheckCommand_InSync(t *testing.T) {
 	// Run the check command with the config file for the in-sync example
-	cmd := exec.Command("./"+testBinaryName, "check", "--config", "testdata/e2e/true_negatives/in_sync_example/.drift.yaml")
+	cmd := exec.Command("./" + testBinaryName, "check", "--config", "testdata/e2e/true_negatives/in_sync_example/.drift.yaml")
 	cmd.Env = append(os.Environ(), "GEMINI_API_KEY="+os.Getenv("GEMINI_API_KEY"))
 
 	output, err := cmd.CombinedOutput()
@@ -126,7 +126,7 @@ func TestCheckCommand_InSync(t *testing.T) {
 
 func TestCheckCommand_CosmeticDiff(t *testing.T) {
 	// Run the check command with the config file for the cosmetic diff example
-	cmd := exec.Command("./"+testBinaryName, "check", "--config", "testdata/e2e/false_positives/cosmetic_diff_example/.drift.yaml")
+	cmd := exec.Command("./" + testBinaryName, "check", "--config", "testdata/e2e/false_positives/cosmetic_diff_example/.drift.yaml")
 	cmd.Env = append(os.Environ(), "GEMINI_API_KEY="+os.Getenv("GEMINI_API_KEY"))
 
 	output, err := cmd.CombinedOutput()
@@ -145,7 +145,7 @@ func TestCheckCommand_CosmeticDiff(t *testing.T) {
 
 func TestCheckCommand_SubtleDrift(t *testing.T) {
 	// Run the check command with the config file for the subtle drift example
-	cmd := exec.Command("./"+testBinaryName, "check", "--config", "testdata/e2e/false_negatives/subtle_drift_example/.drift.yaml")
+	cmd := exec.Command("./" + testBinaryName, "check", "--config", "testdata/e2e/false_negatives/subtle_drift_example/.drift.yaml")
 	cmd.Env = append(os.Environ(), "GEMINI_API_KEY="+os.Getenv("GEMINI_API_KEY"))
 
 	output, err := cmd.CombinedOutput()
