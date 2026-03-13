@@ -18,7 +18,7 @@ files:
     content: |
       # Database Connection
       
-      Call `Connect()` to establish a connection to the primary database.
+      Call `Connect()` to establish a connection to the database.
       
       **Returns:**
       - `error`: If the operation fails.

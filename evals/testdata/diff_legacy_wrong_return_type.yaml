@@ -1,0 +1,25 @@
+name: "Diff legacy wrong return type (True Negative)"
+files:
+  - path: src/api.go
+    content: |
+      package api
+
+      // Helper function to extract token.
+      func extractToken(header string) (string, error) {
+      	return process(header)
+      }
+  - path: docs/api.md
+    content: |
+      # API Helpers
+
+      ## extractToken
+      Extracts the token from the header. Returns only the token (string).
+diff: |
+  @@ -2,3 +2,3 @@
+  -// helper function to extract token
+  +// Helper function to extract token.
+   func extractToken(header string) (string, error) {
+expected:
+  has_drift: true
+  drift_reason_contains: "error"
+  diff_caused_drift: false

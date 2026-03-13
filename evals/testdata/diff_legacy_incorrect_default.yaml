@@ -1,0 +1,36 @@
+name: "Diff legacy incorrect default (True Negative)"
+files:
+  - path: src/timeout.go
+    content: |
+      package core
+
+      // Retry executes a function with a default 60s timeout.
+      func Retry(fn func()) {
+      	execute(fn, 60)
+      }
+
+      // FastRetry executes a function with a 5s timeout.
+      func FastRetry(fn func()) {
+      	execute(fn, 5)
+      }
+  - path: docs/timeout.md
+    content: |
+      # Core Execution
+
+      ## Retry
+      Executes a function with a default 30s timeout.
+
+      ## FastRetry
+      Executes a function with a default 5s timeout.
+diff: |
+  @@ -7,2 +7,7 @@
+   }
+  +
+  +// FastRetry executes a function with a 5s timeout.
+  +func FastRetry(fn func()) {
+  +	execute(fn, 5)
+  +}
+expected:
+  has_drift: true
+  drift_reason_contains: "60"
+  diff_caused_drift: false

@@ -62,6 +62,7 @@ jobs:
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
           changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
+          diff-only: true # Recommended: Only fail if the PR caused the drift
 ```
 
 #### Option 2: Using Native Git (No Dependencies)

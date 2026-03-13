@@ -1,0 +1,27 @@
+name: "Diff legacy unrelated type change (True Negative)"
+files:
+  - path: src/models.go
+    content: |
+      package models
+
+      // Represents a user in the system.
+      type User struct {
+      	ID    string `json:"id"`
+      	Name  string `json:"name"`
+      	Email string `json:"email"`
+      }
+  - path: docs/models.md
+    content: |
+      # Models
+
+      ## User
+      The `User` object has an `id` (integer), `name` (string), and `email` (string).
+diff: |
+  @@ -5,2 +5,3 @@
+   	ID    string `json:"id"`
+   	Name  string `json:"name"`
+  +	Email string `json:"email"`
+expected:
+  has_drift: true
+  drift_reason_contains: "integer"
+  diff_caused_drift: false

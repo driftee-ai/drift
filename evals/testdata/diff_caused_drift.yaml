@@ -1,0 +1,27 @@
+name: "Drift caused by diff (True Positive)"
+files:
+  - path: src/auth.go
+    content: |
+      package auth
+
+      // Authenticate a user with standard credentials and MFA token.
+      func Login(username string, password string, mfaToken string) error {
+      	return nil
+      }
+  - path: docs/auth.md
+    content: |
+      # Authentication API
+      
+      ## `Login` function
+      
+      The `Login` function authenticates a user. It requires a `username` and a `password`.
+diff: |
+  @@ -3,3 +3,3 @@
+   // Authenticate a user with standard credentials and MFA token.
+  -func Login(username string, password string) error {
+  +func Login(username string, password string, mfaToken string) error {
+   	return nil
+expected:
+  has_drift: true
+  drift_reason_contains: "mfaToken"
+  diff_caused_drift: true

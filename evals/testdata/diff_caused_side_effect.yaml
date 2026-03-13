@@ -1,0 +1,27 @@
+name: "Diff caused logic side effect (True Positive)"
+files:
+  - path: src/db.go
+    content: |
+      package db
+
+      // GetUser fetches a user from the database. It is a read-only operation.
+      func GetUser(id string) (*User, error) {
+      	AuditLog(id)
+      	return fetchFromDB(id)
+      }
+  - path: docs/db.md
+    content: |
+      # Database Functions
+
+      ## GetUser
+      Retrieves a user by ID. Crucially, this function performs no writes and is strictly read-only.
+diff: |
+  @@ -4,3 +4,4 @@
+   // GetUser fetches a user from the database. It is a read-only operation.
+   func GetUser(id string) (*User, error) {
+  +	AuditLog(id)
+   	return fetchFromDB(id)
+expected:
+  has_drift: true
+  drift_reason_contains: "write"
+  diff_caused_drift: true
