@@ -3,6 +3,6 @@ provider: gemini
 rules:
   - name: "Cosmetic Diff Example"
     code:
-      - "code.go"
+      - "testdata/e2e/false_positives/cosmetic_diff_example/code.go"
     docs:
-      - "docs.md"
+      - "testdata/e2e/false_positives/cosmetic_diff_example/docs.md"

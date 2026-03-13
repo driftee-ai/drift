@@ -3,6 +3,6 @@ provider: gemini
 rules:
   - name: "In Sync Example"
     code:
-      - "code.go"
+      - "testdata/e2e/true_negatives/in_sync_example/code.go"
     docs:
-      - "docs.md"
+      - "testdata/e2e/true_negatives/in_sync_example/docs.md"

@@ -25,10 +25,10 @@ func NewAnthropicClient() (*AnthropicClient, error) {
 }
 
 type anthropicRequest struct {
-	Model       string    `json:"model"`
-	MaxTokens   int       `json:"max_tokens"`
-	System      string    `json:"system"`
-	Messages    []message `json:"messages"`
+	Model     string    `json:"model"`
+	MaxTokens int       `json:"max_tokens"`
+	System    string    `json:"system"`
+	Messages  []message `json:"messages"`
 }
 
 type message struct {
@@ -46,7 +46,7 @@ type anthropicResponse struct {
 func (c *AnthropicClient) GenerateJSON(ctx context.Context, prompt string, schema interface{}) (string, error) {
 	// Anthropic needs to be prompted explicitly to return only JSON
 	sysPrompt := fmt.Sprintf("You are a deterministic parsing system. You must output exclusively valid JSON matching the following abstract schema structure without any markdown tags or conversation: %+v", schema)
-	
+
 	reqBody := anthropicRequest{
 		Model:     "claude-3-haiku-20240307",
 		MaxTokens: 4096,
@@ -68,7 +68,7 @@ func (c *AnthropicClient) GenerateJSON(ctx context.Context, prompt string, schem
 	if err != nil {
 		return "", err
 	}
-	
+
 	req.Header.Set("x-api-key", c.apiKey)
 	req.Header.Set("anthropic-version", "2023-06-01")
 	req.Header.Set("content-type", "application/json")

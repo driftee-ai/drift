@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/driftee-ai/drift/pkg/llm"
 	"github.com/driftee-ai/drift/pkg/config"
 	"github.com/driftee-ai/drift/pkg/files"
+	"github.com/driftee-ai/drift/pkg/llm"
 	"github.com/driftee-ai/drift/pkg/rules"
 	"github.com/google/generative-ai-go/genai"
 	"github.com/spf13/cobra"
@@ -42,7 +42,7 @@ var checkCmd = &cobra.Command{
 			fmt.Printf("Filtering rules based on %d changed files. %d rules were triggered.\n", len(changedFiles), len(triggeredRules))
 		}
 		allInSync := true
-		
+
 		// Define the Response Schema structure
 		type AssessmentResult struct {
 			IsInSync bool   `json:"is_in_sync"`
@@ -140,7 +140,7 @@ And here is the code:
 
 			// Clean raw string output since some models inject Markdown blocks
 			var result AssessmentResult
-			
+
 			// We manually strip off standard markdown code block tags if they exist.
 			cleanJson := strings.TrimPrefix(strings.TrimSpace(jsonRes), "```json")
 			cleanJson = strings.TrimPrefix(cleanJson, "```")
