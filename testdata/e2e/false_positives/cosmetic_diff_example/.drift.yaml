@@ -1,8 +1,0 @@
-version: 1
-provider: gemini
-rules:
-  - name: "Cosmetic Diff Example"
-    code:
-      - "code.go"
-    docs:
-      - "docs.md"

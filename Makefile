@@ -1,4 +1,4 @@
-.PHONY: build test release dist clean-dist lint integration-test install lint-fix
+.PHONY: build test release dist clean-dist lint eval install lint-fix
 
 install:
 	go build -o /usr/local/bin/drift .
@@ -9,8 +9,8 @@ build:
 test:
 	go test -count=1 ./...
 
-integration-test:
-	go test -v -tags=integration -count=1 ./...
+eval:
+	go test -v -tags=eval -count=1 ./evals/...
 
 release: test
 	@if [ -z "$(VERSION)" ]; then \

@@ -1,0 +1,15 @@
+name: "Completely unrelated files"
+files:
+  - path: src/db/redis.go
+    content: |
+      package db
+
+      // NewRedis creates a redis connection pool
+      func NewRedis() {}
+  - path: docs/ui/button.md
+    content: |
+      # Button Component
+      
+      A clickable rounded UI element used for form submissions.
+expected:
+  has_drift: true
