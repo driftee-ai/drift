@@ -24,7 +24,7 @@ func NewOpenAIClient() (*OpenAIClient, error) {
 }
 
 // GenerateJSON passes prompts natively executing as JSON.
-func (c *OpenAIClient) GenerateJSON(ctx context.Context, prompt string, schema interface{}) (string, error) {
+func (c *OpenAIClient) GenerateJSON(ctx context.Context, prompt string, schema interface{}) (string, Usage, error) {
 	prompt += fmt.Sprintf("\n\nThe system requires you to output the answer strictly as a JSON object resolving to this schema mapping: %+v", schema)
 
 	req := openai.ChatCompletionRequest{
@@ -46,12 +46,18 @@ func (c *OpenAIClient) GenerateJSON(ctx context.Context, prompt string, schema i
 
 	resp, err := c.client.CreateChatCompletion(ctx, req)
 	if err != nil {
-		return "", fmt.Errorf("failed to create chat completion: %w", err)
+		return "", Usage{}, fmt.Errorf("failed to create chat completion: %w", err)
+	}
+
+	usage := Usage{
+		PromptTokens:     resp.Usage.PromptTokens,
+		CompletionTokens: resp.Usage.CompletionTokens,
+		TotalTokens:      resp.Usage.TotalTokens,
 	}
 
 	if len(resp.Choices) > 0 {
-		return resp.Choices[0].Message.Content, nil
+		return resp.Choices[0].Message.Content, usage, nil
 	}
 
-	return "", fmt.Errorf("empty response from OpenAI API")
+	return "", Usage{}, fmt.Errorf("empty response from OpenAI API")
 }

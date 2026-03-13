@@ -1,0 +1,19 @@
+name: "Subtle semantic error drift"
+files:
+  - path: src/service.go
+    content: |
+      package service
+
+      // FindUser looks up a user. Returns nil if they don't exist.
+      func FindUser(tag string) *User {
+          return nil
+      }
+  - path: docs/service.md
+    content: |
+      # Service
+      
+      The `FindUser(tag string)` function locates a user by tag. If no user is found, it throws an `ErrNotFound` error.
+      
+      Returns the User object.
+expected:
+  has_drift: true

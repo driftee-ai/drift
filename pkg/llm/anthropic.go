@@ -40,10 +40,14 @@ type anthropicResponse struct {
 	Content []struct {
 		Text string `json:"text"`
 	} `json:"content"`
+	Usage struct {
+		InputTokens  int `json:"input_tokens"`
+		OutputTokens int `json:"output_tokens"`
+	} `json:"usage"`
 }
 
 // GenerateJSON constructs a direct HTTP request to the Anthropic Messages API.
-func (c *AnthropicClient) GenerateJSON(ctx context.Context, prompt string, schema interface{}) (string, error) {
+func (c *AnthropicClient) GenerateJSON(ctx context.Context, prompt string, schema interface{}) (string, Usage, error) {
 	// Anthropic needs to be prompted explicitly to return only JSON
 	sysPrompt := fmt.Sprintf("You are a deterministic parsing system. You must output exclusively valid JSON matching the following abstract schema structure without any markdown tags or conversation: %+v", schema)
 
@@ -61,12 +65,12 @@ func (c *AnthropicClient) GenerateJSON(ctx context.Context, prompt string, schem
 
 	jsonValue, err := json.Marshal(reqBody)
 	if err != nil {
-		return "", err
+		return "", Usage{}, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", "https://api.anthropic.com/v1/messages", bytes.NewBuffer(jsonValue))
 	if err != nil {
-		return "", err
+		return "", Usage{}, err
 	}
 
 	req.Header.Set("x-api-key", c.apiKey)
@@ -76,27 +80,33 @@ func (c *AnthropicClient) GenerateJSON(ctx context.Context, prompt string, schem
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("anthropic rest failure: %w", err)
+		return "", Usage{}, fmt.Errorf("anthropic rest failure: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", Usage{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("anthropic error response (status %d): %s", resp.StatusCode, string(body))
+		return "", Usage{}, fmt.Errorf("anthropic error response (status %d): %s", resp.StatusCode, string(body))
 	}
 
 	var response anthropicResponse
 	if err := json.Unmarshal(body, &response); err != nil {
-		return "", fmt.Errorf("failed to unmarshal anthropic response: %w", err)
+		return "", Usage{}, fmt.Errorf("failed to unmarshal anthropic response: %w", err)
+	}
+
+	usage := Usage{
+		PromptTokens:     response.Usage.InputTokens,
+		CompletionTokens: response.Usage.OutputTokens,
+		TotalTokens:      response.Usage.InputTokens + response.Usage.OutputTokens,
 	}
 
 	if len(response.Content) > 0 {
-		return response.Content[0].Text, nil
+		return response.Content[0].Text, usage, nil
 	}
 
-	return "", fmt.Errorf("empty content response from Anthropic API")
+	return "", Usage{}, fmt.Errorf("empty content response from Anthropic API")
 }

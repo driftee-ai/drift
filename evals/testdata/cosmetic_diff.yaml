@@ -1,0 +1,21 @@
+name: "Cosmetic grammatical diff"
+files:
+  - path: src/auth.go
+    content: |
+      package auth
+
+      // GenerateToken creates a new JWT access token.
+      func GenerateToken(userID string) (string, error) {
+          return "tok", nil
+      }
+  - path: docs/auth.md
+    content: |
+      # GenerateToken
+      
+      Builds and returns a fresh JSON Web Token for the provided user ID.
+      
+      **Returns:**
+      - The token string
+      - An error if generation fails
+expected:
+  has_drift: false

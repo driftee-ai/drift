@@ -1,8 +1,0 @@
-version: 1
-provider: gemini
-rules:
-  - name: "In Sync Example"
-    code:
-      - "testdata/e2e/true_negatives/in_sync_example/code.go"
-    docs:
-      - "testdata/e2e/true_negatives/in_sync_example/docs.md"

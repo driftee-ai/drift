@@ -1,8 +1,0 @@
-version: 1
-provider: gemini
-rules:
-  - name: "Cosmetic Diff Example"
-    code:
-      - "testdata/e2e/false_positives/cosmetic_diff_example/code.go"
-    docs:
-      - "testdata/e2e/false_positives/cosmetic_diff_example/docs.md"

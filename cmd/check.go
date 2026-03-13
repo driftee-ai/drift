@@ -131,7 +131,7 @@ And here is the code:
 				schema = AssessmentResult{}
 			}
 
-			jsonRes, err := docAssessor.GenerateJSON(cmd.Context(), prompt, schema)
+			jsonRes, _, err := docAssessor.GenerateJSON(cmd.Context(), prompt, schema)
 			if err != nil {
 				log.Printf("Error assessing drift for rule '%s': %v", rule.Name, err)
 				allInSync = false // Consider assessment error as out of sync

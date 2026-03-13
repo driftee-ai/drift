@@ -1,0 +1,20 @@
+name: "JSON serialization tag drift"
+files:
+  - path: src/api/payloads.go
+    content: |
+      package api
+
+      type UpdateRequest struct {
+          UserID string `json:"user_id"`
+          Status string `json:"status"`
+      }
+  - path: docs/api/endpoints.md
+    content: |
+      # Update Endpoint
+      
+      Send a JSON payload with the following fields:
+      - `userId`: The ID of the user.
+      - `status`: The new status.
+expected:
+  has_drift: true
+  drift_reason_contains: "user_id"

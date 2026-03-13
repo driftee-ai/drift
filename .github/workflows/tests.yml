@@ -20,7 +20,7 @@ jobs:
       - name: Run tests
         run: make test
 
-  integration-test:
+  eval:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -31,7 +31,7 @@ jobs:
         with:
           go-version: "1.25"
 
-      - name: Run live tests
+      - name: Run evaluation suite
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: make integration-test
+        run: make eval

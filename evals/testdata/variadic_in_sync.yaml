@@ -1,0 +1,16 @@
+name: "Variadic functions in sync"
+files:
+  - path: src/logger.go
+    content: |
+      package logger
+
+      // Infof logs a formatted message with any number of arguments.
+      func Infof(format string, args ...interface{}) {
+      }
+  - path: docs/logger.md
+    content: |
+      # Logging
+      
+      To log an info-level message, use `Infof(format string, args...)`. It takes a format string and an arbitrary number of values to interpolate.
+expected:
+  has_drift: false

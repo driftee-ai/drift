@@ -34,7 +34,7 @@ func NewGeminiClient() (*GeminiClient, error) {
 }
 
 // GenerateJSON generates content returning it natively as a JSON string format representing the schema.
-func (c *GeminiClient) GenerateJSON(ctx context.Context, prompt string, schema interface{}) (string, error) {
+func (c *GeminiClient) GenerateJSON(ctx context.Context, prompt string, schema interface{}) (string, Usage, error) {
 	// Only assign the schema if it perfectly matches genai.Schema
 	if s, ok := schema.(*genai.Schema); ok {
 		c.client.ResponseSchema = s
@@ -45,18 +45,25 @@ func (c *GeminiClient) GenerateJSON(ctx context.Context, prompt string, schema i
 
 	resp, err := c.client.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {
-		return "", fmt.Errorf("failed to generate content: %w", err)
+		return "", Usage{}, fmt.Errorf("failed to generate content: %w", err)
+	}
+
+	var usage Usage
+	if resp.UsageMetadata != nil {
+		usage.PromptTokens = int(resp.UsageMetadata.PromptTokenCount)
+		usage.CompletionTokens = int(resp.UsageMetadata.CandidatesTokenCount)
+		usage.TotalTokens = int(resp.UsageMetadata.TotalTokenCount)
 	}
 
 	if len(resp.Candidates) > 0 {
 		content := resp.Candidates[0].Content
 		if len(content.Parts) > 0 {
 			if textVal, ok := content.Parts[0].(genai.Text); ok {
-				return string(textVal), nil
+				return string(textVal), usage, nil
 			}
-			return fmt.Sprintf("%v", content.Parts[0]), nil
+			return fmt.Sprintf("%v", content.Parts[0]), usage, nil
 		}
 	}
 
-	return "", fmt.Errorf("empty response from Gemini API")
+	return "", Usage{}, fmt.Errorf("empty response from Gemini API")
 }
