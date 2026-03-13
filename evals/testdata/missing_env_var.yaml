@@ -19,6 +19,9 @@ files:
       # Database Connection
       
       Call `Connect()` to establish a connection to the primary database.
+      
+      **Returns:**
+      - `error`: If the operation fails.
 expected:
   has_drift: true
   drift_reason_contains: "DB_PASS"
