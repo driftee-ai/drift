@@ -76,6 +76,10 @@ var checkCmd = &cobra.Command{
 			}
 			fmt.Printf("    Found %d doc files, total size: %d bytes\n", len(docFiles), len(docContent))
 
+			if len(codeFiles) == 0 && len(docFiles) == 0 {
+				fmt.Printf("    Result: Skipped (no code or doc files found)\n")
+				continue
+			}
 			if len(codeFiles) == 0 || len(docFiles) == 0 {
 				fmt.Printf("    Result: Out of Sync (missing code or doc files)\n")
 				allInSync = false
