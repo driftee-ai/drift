@@ -1,0 +1,32 @@
+name: "Diff caused default value changed (True Positive)"
+files:
+  - path: src/connection.go
+    content: |
+      package connection
+
+      // Connect establishes a secure connection. Default timeout is 60 seconds.
+      func Connect(timeout int) {
+      	if timeout == 0 {
+      		timeout = 60
+      	}
+      	// ...
+      }
+  - path: docs/connection.md
+    content: |
+      # Connection Options
+      
+      ## Connect
+      Connects to the upstream service. If `timeout` is 0, it defaults to 30 seconds.
+diff: |
+  @@ -3,3 +3,3 @@
+  -// Connect establishes a secure connection. Default timeout is 30 seconds.
+  +// Connect establishes a secure connection. Default timeout is 60 seconds.
+   func Connect(timeout int) {
+   	if timeout == 0 {
+  -		timeout = 30
+  +		timeout = 60
+   	}
+expected:
+  has_drift: true
+  drift_reason_contains: "60"
+  diff_caused_drift: true

@@ -1,0 +1,28 @@
+name: "Diff caused type change (True Positive)"
+files:
+  - path: src/models.go
+    content: |
+      package models
+
+      // Represents a user in the system.
+      type User struct {
+      	ID   string `json:"id"`
+      	Name string `json:"name"`
+      }
+  - path: docs/models.md
+    content: |
+      # Models
+
+      ## User
+      The `User` object has an `id` (integer) and a `name` (string).
+diff: |
+  @@ -3,4 +3,4 @@
+   // Represents a user in the system.
+   type User struct {
+  -	ID   int    `json:"id"`
+  +	ID   string `json:"id"`
+   	Name string `json:"name"`
+expected:
+  has_drift: true
+  drift_reason_contains: "string"
+  diff_caused_drift: true

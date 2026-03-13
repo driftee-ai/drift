@@ -1,0 +1,29 @@
+name: "Legacy drift not caused by diff (True Negative)"
+files:
+  - path: src/auth.go
+    content: |
+      package auth
+
+      import "log"
+
+      // Authenticate a user with standard credentials and MFA token.
+      func Login(username string, password string, mfaToken string) error {
+      	log.Println("Handling login attempt for user", username)
+      	return nil
+      }
+  - path: docs/auth.md
+    content: |
+      # Authentication API
+      
+      ## `Login` function
+      
+      The `Login` function authenticates a user. It requires a `username` and a `password`.
+diff: |
+  @@ -6,2 +6,3 @@
+   func Login(username string, password string, mfaToken string) error {
+  +	log.Println("Handling login attempt for user", username)
+   	return nil
+expected:
+  has_drift: true
+  drift_reason_contains: "mfaToken"
+  diff_caused_drift: false

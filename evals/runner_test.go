@@ -19,9 +19,11 @@ import (
 type TestCase struct {
 	Name     string `yaml:"name"`
 	Files    []File `yaml:"files"`
+	Diff     string `yaml:"diff,omitempty"`
 	Expected struct {
 		HasDrift            bool   `yaml:"has_drift"`
-		DriftReasonContains string `yaml:"drift_reason_contains"`
+		DriftReasonContains string `yaml:"drift_reason_contains,omitempty"`
+		DiffCausedDrift     *bool  `yaml:"diff_caused_drift,omitempty"`
 	} `yaml:"expected"`
 }
 
@@ -44,6 +46,7 @@ func TestEvals(t *testing.T) {
 
 	var totalPromptTokens, totalCompletionTokens int
 	var truePositives, falsePositives, trueNegatives, falseNegatives int
+	var diffTruePositives, diffFalsePositives, diffTrueNegatives, diffFalseNegatives int
 
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yaml") {
@@ -86,6 +89,10 @@ And here is the code:
 %s
 `, docStr, codeStr)
 
+			if tc.Diff != "" {
+				prompt += fmt.Sprintf("\nHere is the git diff of the recent changes:\n---\n%s\n---\nBased on the provided diff, did the changes introduced in this diff cause the documentation drift?", tc.Diff)
+			}
+
 			schema := &genai.Schema{
 				Type: genai.TypeObject,
 				Properties: map[string]*genai.Schema{
@@ -101,6 +108,14 @@ And here is the code:
 				Required: []string{"is_in_sync", "reason"},
 			}
 
+			if tc.Diff != "" {
+				schema.Properties["is_drift_caused_by_diff"] = &genai.Schema{
+					Type:        genai.TypeBoolean,
+					Description: "True if the documentation drift was caused by the provided git diff, false if the drift is preexisting or unrelated.",
+				}
+				schema.Required = append(schema.Required, "is_drift_caused_by_diff")
+			}
+
 			jsonRes, usage, err := docAssessor.GenerateJSON(context.Background(), prompt, schema)
 			if err != nil {
 				t.Fatalf("LLM call failed: %v", err)
@@ -110,8 +125,9 @@ And here is the code:
 			totalCompletionTokens += usage.CompletionTokens
 
 			type AssessmentResult struct {
-				IsInSync bool   `json:"is_in_sync"`
-				Reason   string `json:"reason"`
+				IsInSync            bool   `json:"is_in_sync"`
+				Reason              string `json:"reason"`
+				IsDriftCausedByDiff *bool  `json:"is_drift_caused_by_diff,omitempty"`
 			}
 			
 			cleanJson := strings.TrimPrefix(strings.TrimSpace(jsonRes), "```json")
@@ -137,6 +153,27 @@ And here is the code:
 				t.Errorf("False Negative: Expected Drift Detected but got In_Sync. Reason: %s", result.Reason)
 			} else {
 				trueNegatives++
+			}
+
+			if tc.Expected.DiffCausedDrift != nil {
+				if result.IsDriftCausedByDiff == nil {
+					t.Errorf("Expected IsDriftCausedByDiff to be present, but it was nil")
+				} else {
+					actualDiffCausedDrift := *result.IsDriftCausedByDiff
+					expectedDiffCausedDrift := *tc.Expected.DiffCausedDrift
+					
+					if actualDiffCausedDrift && expectedDiffCausedDrift {
+						diffTruePositives++
+					} else if actualDiffCausedDrift && !expectedDiffCausedDrift {
+						diffFalsePositives++
+						t.Errorf("Diff False Positive: Expected diff to NOT cause drift, but LLM said it did. Reason: %s", result.Reason)
+					} else if !actualDiffCausedDrift && expectedDiffCausedDrift {
+						diffFalseNegatives++
+						t.Errorf("Diff False Negative: Expected diff to cause drift, but LLM said it didn't. Reason: %s", result.Reason)
+					} else {
+						diffTrueNegatives++
+					}
+				}
 			}
 
 			if actualHasDrift && tc.Expected.DriftReasonContains != "" {
@@ -171,6 +208,30 @@ And here is the code:
 		fmt.Printf("Precision:        %.4f\n", precision)
 		fmt.Printf("Recall:           %.4f\n", recall)
 		fmt.Printf("F1 Score:         %.4f\n", f1)
+
+		if diffTruePositives+diffFalsePositives+diffTrueNegatives+diffFalseNegatives > 0 {
+			diffPrecision := 0.0
+			if diffTruePositives+diffFalsePositives > 0 {
+				diffPrecision = float64(diffTruePositives) / float64(diffTruePositives+diffFalsePositives)
+			}
+			diffRecall := 0.0
+			if diffTruePositives+diffFalseNegatives > 0 {
+				diffRecall = float64(diffTruePositives) / float64(diffTruePositives+diffFalseNegatives)
+			}
+			diffF1 := 0.0
+			if diffPrecision+diffRecall > 0 {
+				diffF1 = 2 * (diffPrecision * diffRecall) / (diffPrecision + diffRecall)
+			}
+			fmt.Printf("\n--- Diff Attribution Metrics ---\n")
+			fmt.Printf("True Positives:   %d\n", diffTruePositives)
+			fmt.Printf("False Positives:  %d\n", diffFalsePositives)
+			fmt.Printf("True Negatives:   %d\n", diffTrueNegatives)
+			fmt.Printf("False Negatives:  %d\n", diffFalseNegatives)
+			fmt.Printf("Diff Precision:   %.4f\n", diffPrecision)
+			fmt.Printf("Diff Recall:      %.4f\n", diffRecall)
+			fmt.Printf("Diff F1 Score:    %.4f\n", diffF1)
+		}
+		
 		fmt.Printf("====================\n")
 	})
 }

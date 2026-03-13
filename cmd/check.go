@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -21,6 +22,33 @@ var checkCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		configFile, _ := cmd.Flags().GetString("config")
 		changedFiles, _ := cmd.Flags().GetStringSlice("changed-files")
+		diffOnly, _ := cmd.Flags().GetBool("diff-only")
+		diffFile, _ := cmd.Flags().GetString("diff")
+
+		var diffContext string
+		if diffOnly {
+			if diffFile == "" {
+				log.Fatal("When --diff-only is provided, you must also provide the diff file path using --diff, or use --diff - to read from stdin.")
+			}
+
+			if diffFile == "-" {
+				bytes, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					log.Fatalf("Failed to read diff from stdin: %v", err)
+				}
+				diffContext = string(bytes)
+			} else {
+				bytes, err := os.ReadFile(diffFile)
+				if err != nil {
+					log.Fatalf("Failed to read diff file %s: %v", diffFile, err)
+				}
+				diffContext = string(bytes)
+			}
+
+			if strings.TrimSpace(diffContext) == "" {
+				log.Println("Warning: --diff-only provided but the diff context is empty.")
+			}
+		}
 
 		cfg, err := config.Load(configFile)
 		if err != nil {
@@ -45,8 +73,9 @@ var checkCmd = &cobra.Command{
 
 		// Define the Response Schema structure
 		type AssessmentResult struct {
-			IsInSync bool   `json:"is_in_sync"`
-			Reason   string `json:"reason"`
+			IsInSync            bool   `json:"is_in_sync"`
+			Reason              string `json:"reason"`
+			IsDriftCausedByDiff *bool  `json:"is_drift_caused_by_diff,omitempty"`
 		}
 
 		for _, rule := range triggeredRules {
@@ -111,9 +140,13 @@ And here is the code:
 %s
 `, docContent, codeStr)
 
+			if diffOnly && diffContext != "" {
+				prompt += fmt.Sprintf("\nHere is the git diff of the recent changes:\n---\n%s\n---\nBased on the provided diff, did the changes introduced in this diff cause the documentation drift?", diffContext)
+			}
+
 			var schema interface{}
 			if cfg.Provider == "gemini" {
-				schema = &genai.Schema{
+				geminiSchema := &genai.Schema{
 					Type: genai.TypeObject,
 					Properties: map[string]*genai.Schema{
 						"is_in_sync": {
@@ -127,6 +160,16 @@ And here is the code:
 					},
 					Required: []string{"is_in_sync", "reason"},
 				}
+
+				if diffOnly && diffContext != "" {
+					geminiSchema.Properties["is_drift_caused_by_diff"] = &genai.Schema{
+						Type:        genai.TypeBoolean,
+						Description: "True if the documentation drift was caused by the provided git diff, false if the drift is preexisting or unrelated.",
+					}
+					geminiSchema.Required = append(geminiSchema.Required, "is_drift_caused_by_diff")
+				}
+
+				schema = geminiSchema
 			} else {
 				schema = AssessmentResult{}
 			}
@@ -156,8 +199,13 @@ And here is the code:
 			if result.IsInSync {
 				fmt.Printf("    Result: In Sync\n")
 			} else {
-				fmt.Printf("    Result: Out of Sync (%s)\n", result.Reason)
-				allInSync = false // Set flag to false
+				if diffOnly && diffContext != "" && result.IsDriftCausedByDiff != nil && !*result.IsDriftCausedByDiff {
+					fmt.Printf("    Result: Drift detected, but ignoring since it was not caused by the diff and we are in --diff-only mode. (Reason: %s)\n", result.Reason)
+					// Do not set allInSync = false
+				} else {
+					fmt.Printf("    Result: Out of Sync (%s)\n", result.Reason)
+					allInSync = false // Set flag to false
+				}
 			}
 		}
 
@@ -172,4 +220,6 @@ func init() {
 	rootCmd.AddCommand(checkCmd)
 	checkCmd.Flags().StringP("config", "c", ".drift.yaml", "Path to the drift configuration file")
 	checkCmd.Flags().StringSliceP("changed-files", "f", []string{}, "List of changed files to check for drift")
+	checkCmd.Flags().Bool("diff-only", false, "Only fail if the detected drift was caused by the provided git diff")
+	checkCmd.Flags().String("diff", "", "Path to a file containing the git diff, or '-' to read from stdin (required if --diff-only is used)")
 }

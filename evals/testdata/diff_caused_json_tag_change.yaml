@@ -1,0 +1,25 @@
+name: "Diff caused json tag change (True Positive)"
+files:
+  - path: src/config.go
+    content: |
+      package config
+
+      // API configuration block.
+      type Config struct {
+      	Timeout int `json:"timeout_ms"`
+      }
+  - path: docs/config.md
+    content: |
+      # Configuration
+      
+      The configuration block serializes to `{ "timeout": 30 }`.
+diff: |
+  @@ -3,3 +3,3 @@
+   type Config struct {
+  -	Timeout int `json:"timeout"`
+  +	Timeout int `json:"timeout_ms"`
+   }
+expected:
+  has_drift: true
+  drift_reason_contains: "timeout_ms"
+  diff_caused_drift: true
