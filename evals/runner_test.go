@@ -155,20 +155,24 @@ And here is the code:
 				trueNegatives++
 			}
 
-			if tc.Expected.DiffCausedDrift != nil && result.IsDriftCausedByDiff != nil {
-				actualDiffCausedDrift := *result.IsDriftCausedByDiff
-				expectedDiffCausedDrift := *tc.Expected.DiffCausedDrift
-				
-				if actualDiffCausedDrift && expectedDiffCausedDrift {
-					diffTruePositives++
-				} else if actualDiffCausedDrift && !expectedDiffCausedDrift {
-					diffFalsePositives++
-					t.Errorf("Diff False Positive: Expected diff to NOT cause drift, but LLM said it did. Reason: %s", result.Reason)
-				} else if !actualDiffCausedDrift && expectedDiffCausedDrift {
-					diffFalseNegatives++
-					t.Errorf("Diff False Negative: Expected diff to cause drift, but LLM said it didn't. Reason: %s", result.Reason)
+			if tc.Expected.DiffCausedDrift != nil {
+				if result.IsDriftCausedByDiff == nil {
+					t.Errorf("Expected IsDriftCausedByDiff to be present, but it was nil")
 				} else {
-					diffTrueNegatives++
+					actualDiffCausedDrift := *result.IsDriftCausedByDiff
+					expectedDiffCausedDrift := *tc.Expected.DiffCausedDrift
+					
+					if actualDiffCausedDrift && expectedDiffCausedDrift {
+						diffTruePositives++
+					} else if actualDiffCausedDrift && !expectedDiffCausedDrift {
+						diffFalsePositives++
+						t.Errorf("Diff False Positive: Expected diff to NOT cause drift, but LLM said it did. Reason: %s", result.Reason)
+					} else if !actualDiffCausedDrift && expectedDiffCausedDrift {
+						diffFalseNegatives++
+						t.Errorf("Diff False Negative: Expected diff to cause drift, but LLM said it didn't. Reason: %s", result.Reason)
+					} else {
+						diffTrueNegatives++
+					}
 				}
 			}
 
