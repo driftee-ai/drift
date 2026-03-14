@@ -43,3 +43,5 @@ docs/out/
 
 .gemini/
 gha-creds-*.json
+scratch/
+
