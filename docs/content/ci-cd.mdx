@@ -86,7 +86,7 @@ jobs:
         uses: driftee-ai/drift-action@v1
         env:
           # Compare HEAD against the base branch (usually origin/main)
-          CHANGED_FILES: $(git diff --name-only origin/${{ githubhb.base_ref }}...HEAD | tr '\n' ',')
+          CHANGED_FILES: $(git diff --name-only origin/${{ github.base_ref }}...HEAD | tr '\n' ',')
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
           changed-files: ${{ env.CHANGED_FILES }}
