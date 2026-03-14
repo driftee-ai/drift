@@ -53,11 +53,11 @@ func ScanProject(fastMode bool) (map[string]string, error) {
 		// Check if it's a code or doc file based on extension
 		ext := strings.ToLower(filepath.Ext(path))
 		isDoc := ext == ".md" || ext == ".mdx" || ext == ".txt" || ext == ".rst"
-		
+
 		// Common programming languages
-		isCode := ext == ".go" || ext == ".ts" || ext == ".js" || ext == ".jsx" || ext == ".tsx" || ext == ".py" || 
-				  ext == ".rb" || ext == ".java" || ext == ".c" || ext == ".cpp" || ext == ".rs" || ext == ".php" || 
-				  ext == ".cs" || ext == ".swift" || ext == ".kt" || ext == ".scala" || ext == ".sh"
+		isCode := ext == ".go" || ext == ".ts" || ext == ".js" || ext == ".jsx" || ext == ".tsx" || ext == ".py" ||
+			ext == ".rb" || ext == ".java" || ext == ".c" || ext == ".cpp" || ext == ".rs" || ext == ".php" ||
+			ext == ".cs" || ext == ".swift" || ext == ".kt" || ext == ".scala" || ext == ".sh"
 
 		if isDoc || isCode {
 			if fastMode {

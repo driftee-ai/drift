@@ -128,12 +128,12 @@ func reviewRules(rules []config.Rule) ([]config.Rule, error) {
 
 		codeGlob := strings.Join(rule.Code, ", ")
 		docGlob := strings.Join(rule.Docs, ", ")
-		
+
 		if codeGlob == "" {
-		    codeGlob = "**/*.go"
+			codeGlob = "**/*.go"
 		}
 		if docGlob == "" {
-		    docGlob = "**/*.md"
+			docGlob = "**/*.md"
 		}
 
 		form := huh.NewForm(
@@ -176,7 +176,7 @@ func reviewRules(rules []config.Rule) ([]config.Rule, error) {
 			if err := editForm.Run(); err != nil {
 				return nil, err
 			}
-			
+
 			// Simple split and trim
 			rule.Code = []string{}
 			for _, p := range strings.Split(codeGlob, ",") {
@@ -184,7 +184,7 @@ func reviewRules(rules []config.Rule) ([]config.Rule, error) {
 					rule.Code = append(rule.Code, trimmed)
 				}
 			}
-			
+
 			rule.Docs = []string{}
 			for _, p := range strings.Split(docGlob, ",") {
 				if trimmed := strings.TrimSpace(p); trimmed != "" {
