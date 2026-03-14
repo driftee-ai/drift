@@ -57,3 +57,13 @@ To run the linter:
 ```bash
 make lint
 ```
+
+### Documentation Site
+
+The `docs` folder contains a Next.js/Nextra application that serves the documentation generated at https://driftee-ai.github.io/drift.
+
+To run the documentation site locally for previewing changes:
+
+```bash
+make docs-dev
+```

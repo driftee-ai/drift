@@ -1,21 +1,26 @@
-
 # Configuration
 
-The `drift` tool is configured using a `.drift.yaml` file in the root of your project.
+Drift maps code to documentation using a configuration file located in the root of your project.
 
-## Top-Level Fields
+## File Discovery
+By default, Drift looks for `.drift.yaml` but will automatically fall back to the following filenames in order if they exist:
+1. `.drift.yaml`
+2. `.drift.yml`
+3. `drift.yaml`
+4. `drift.yml`
 
-- **`version`** (required): The version of the configuration file format. Currently, this should be `1`.
-- **`provider`** (required): The backend provider to use for assessing drift. Currently supported providers are:
-    - `"gemini"`: Uses the Google Gemini API. Requires the `GEMINI_API_KEY` environment variable to be set.
-    - `"openai"`: Uses the OpenAI API. Requires the `OPENAI_API_KEY` environment variable to be set.
-- **`rules`** (required): A list of rules to check.
+## Global Settings
 
-## Rule Fields
+- **`version`** (required): The configuration version format. Always `1` for now.
+- **`provider`** (required): The backend LLM provider to use (`gemini`, `openai`, or `anthropic`). Appropriate API keys (`GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`) must be set in your environment.
 
-- **`name`** (required): A descriptive name for the rule.
-- **`code`** (required): A list of glob patterns for the code files.
-- **`docs`** (required): A list of glob patterns for the documentation files.
+## Rules
+
+The `rules` array defines exactly what Drift should be analyzing.
+
+- **`name`** (required): A human-readable identifier for the rule.
+- **`code`** (required): An array of glob patterns pointing to the source code files.
+- **`docs`** (required): An array of glob patterns pointing to the corresponding documentation files.
 
 ## Example `.drift.yaml`
 
@@ -23,12 +28,12 @@ The `drift` tool is configured using a `.drift.yaml` file in the root of your pr
 version: 1
 provider: gemini
 rules:
-  - name: "User API Documentation"
+  - name: "User API"
     code:
       - "src/api/user.go"
     docs:
       - "docs/api/users.md"
-  - name: "Authentication Service"
+  - name: "Authentication"
     code:
       - "src/auth/**/*.go"
     docs:

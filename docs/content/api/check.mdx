@@ -1,68 +1,64 @@
 # `drift check`
 
-This command checks for drift between your code and documentation based on the rules in your `.drift.yaml` file.
+Evaluates your codebase against your documentation to detect out-of-sync content based on your `.drift.yaml` configuration.
 
-To check all files:
+## Basic Usage
+
+Check all tracked files:
 
 ```bash
 drift check
 ```
 
-You can also use a custom configuration file with the `--config` flag:
+Use a custom configuration file:
 
 ```bash
-drift check --config /path/to/your/config.yaml
+drift check --config /path/to/custom/drift.yaml
 ```
 
-### Checking Changed Files
+## Advanced Checking
 
-For faster checks, especially in a CI/CD environment, you can check only the files that have been modified. The `--changed-files` flag (or `-f`) allows you to pass a list of file paths to check against.
+### Check Changed Files (Action/CI)
 
-`drift` will then compare this list of files against the glob patterns in your rules and only run the assessments for the rules that are "triggered" by a matching file.
+For lightning-fast CI/CD pipelines, verify only files that have changed in an active pull request:
 
 ```bash
-# Pass a specific list of files
+# Pass explicitly modified files
 drift check --changed-files "pkg/server/main.go,docs/api/server.md"
 ```
 
-This is most powerful when combined with `git` to automatically check files in a pull request:
+Combined with `git` to seamlessly automate pull request checks:
 
 ```bash
-# Get a list of changed files from git and pass them to drift
+# Get PR files and pass them directly to Drift
 CHANGED_FILES=$(git diff --name-only origin/main...HEAD | tr '\n' ',')
 drift check --changed-files "$CHANGED_FILES"
 ```
 
+See our [CI/CD Integration](../ci-cd.mdx) guide for more information and GitHub Actions examples.
+
 ### Diff-Aware Strictness (`--diff-only`)
 
-By default, `drift check` runs in "strict" mode. If it finds *any* drift in the evaluated files, it will exit with a failure code, even if that drift was introduced years ago.
+By default, Drift is **strict**. It will fail if *any* drift exists in the evaluated files, even if that documentation debt is years old.
 
-To ease adoption and avoid blocking pull requests due to pre-existing legacy drift, you can pass the `--diff-only` flag. This requires you to also provide the actual git diff via the `--diff` flag or standard input (depending on your setup). 
-
-When enabled, `drift check` will evaluate the drift and the git diff together. It will **only** fail if the LLM determines that the *new code changes* are responsible for the documentation drift. If it finds legacy drift unrelated to the diff, it will print a soft yellow warning but cleanly exit with `0`.
+To seamlessly integrate into legacy codebases without blocking PRs, use `--diff-only`. This mode evaluates the exact git diff. It will **only** fail if the LLM determines your *new code changes* directly caused the documentation drift. Legacy drift is reported as a soft warning.
 
 ```bash
-# Evaluate drift but forgive pre-existing legacy documentation debt
+# Forgive legacy documentation debt, but block new drift
 git diff origin/main...HEAD > pr.diff
 drift check --changed-files "$CHANGED_FILES" --diff-only --diff pr.diff
 ```
 
-The `drift check` command evaluates your code and documentation against the `rules` defined in your `.drift.yaml` configuration file. Each rule specifies a set of code files and corresponding documentation files to be assessed for consistency.
+## Example Output
 
-If `drift` detects any discrepancies, it will report them and exit with a non-zero exit code, making it easy to integrate into your CI/CD pipeline. The assessment is performed by an AI model (e.g., Gemini, OpenAI) which analyzes the content and provides a reason for any detected drift.
-
-### Example Output
-
-Here's an example of what you might see if drift is detected:
+If Drift detects discrepancies, it exits with a non-zero code to block your pipeline and provides the LLM's explicit reasoning:
 
 ```
 Loaded 1 rules from .drift.yaml (provider: gemini)
-  - Rule: User API Documentation
+  - Rule: User API
     Found 1 code files, total size: 1234 bytes
     Found 1 doc files, total size: 567 bytes
     Result: Out of Sync (Reason: The `GetUser` function in `user.go` now includes a `context.Context` parameter, which is not reflected in the `users.md` documentation.)
-drift detected
+Drift detected
 ```
-
-For more details on configuring your `rules` and LLM providers, refer to the [Configuration Guide](../../configuration.mdx).
 

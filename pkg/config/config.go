@@ -18,11 +18,27 @@ type Rule struct {
 	Docs []string `yaml:"docs" json:"docs"`
 }
 
-// Load finds and unmarshals a .drift.yaml file
+// Load finds and unmarshals a drift configuration file.
+// If the provided path is exactly ".drift.yaml" but doesn't exist,
+// it gracefully falls back to checking common alternatives like "drift.yaml".
 func Load(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		if os.IsNotExist(err) && path == ".drift.yaml" {
+			fallbacks := []string{".drift.yml", "drift.yaml", "drift.yml"}
+			for _, fb := range fallbacks {
+				if d, e := os.ReadFile(fb); e == nil {
+					data = d
+					path = fb
+					break
+				}
+			}
+			if data == nil {
+				return nil, err // Return the original error for ".drift.yaml" if no fallbacks work
+			}
+		} else {
+			return nil, err
+		}
 	}
 
 	var config Config

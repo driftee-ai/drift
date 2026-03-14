@@ -1,14 +1,13 @@
 # CI/CD Integration
 
-`drift` is designed to be a part of your CI/CD pipeline, helping you catch documentation drift before it gets merged. While you can run it locally, its true power is unlocking automated, intelligent reviews on every Pull Request.
+`drift` is designed to run in your CI/CD pipeline, catching documentation drift before code gets merged. While you can run it locally, automating intelligent reviews on every Pull Request is incredibly powerful.
 
 ## GitHub Action
 
-We provide an official [GitHub Action](https://github.com/driftee-ai/drift-action) to make integration seamless.
+We provide an official [GitHub Action](https://github.com/driftee-ai/drift-action) for seamless integration.
 
 ### Basic Usage
-For detailed setup instructions, please see the [action's README](https://github.com/driftee-ai/drift-action).
-At a minimum, you can run `drift check` against your entire repository. This ensures that *all* documentation is currently in sync with *all* code.
+For detailed setup instructions, please see the [action's README](https://github.com/driftee-ai/drift-action). The foundational approach is to run `drift check` against your entire repository:
 
 ```yaml
 name: Drift Check

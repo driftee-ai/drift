@@ -2,8 +2,16 @@
 
 [**Full Documentation**](https://driftee-ai.github.io/drift)
 
-Drift is a command-line tool to detect and prevent drift between your code and your documentation.
-It uses large language models to assess if your documentation accurately reflects your code.
+## Why use Drift?
+
+Documentation falls behind. It's inevitable. 
+
+Drift automates the synchronization process by using AI to semantically compare your codebase against your documentation, instantly catching discrepancies before they ship. No more outdated READMEs or misleading API references in production.
+
+- **Never Ship Outdated Docs:** Catch documentation drift the moment it happens. Keep your users happy and your API references perfectly accurate.
+- **Automated PR Enforcement:** Put documentation review on autopilot. Drift runs natively in your CI/CD pipeline to flag missing updates before they merge.
+- **Zero Friction Setup:** Map your entire codebase to your documentation in minutes using our interactive CLI wizard and wildcard-friendly YAML.
+- **Model Agnostic:** Plug and play with your preferred LLM provider. First-class support for Gemini, OpenAI, and Anthropic.
 
 ## Installation
 
@@ -30,7 +38,7 @@ drift --version
 
 ### `drift init`
 
-Initializes a new project by running an interactive setup wizard that automatically discovers mappings between your code and documentation.
+Initializes a new project by launching an interactive setup wizard. It automatically discovers and maps your codebase to your documentation.
 
 ```bash
 drift init
@@ -46,7 +54,7 @@ drift init --dir /path/to/target/directory
 
 ### `drift check`
 
-Checks for drift between your code and documentation based on the rules in your `.drift.yaml` file.
+Evaluates your codebase against your documentation to detect out-of-sync content based on your `.drift.yaml` configuration.
 
 **Check all files:**
 
@@ -62,19 +70,17 @@ drift check --config /path/to/your/config.yaml
 
 **Check only changed files:**
 
-For faster checks, especially in CI/CD, use the `--changed-files` flag to check only files that have been modified. See the [full documentation](https://driftee-ai.github.io/drift) for more details and CI/CD examples.
+For lightning-fast CI/CD pipelines, use `--changed-files` to verify only the code modified in an active pull request. See the [full documentation](https://driftee-ai.github.io/drift) for advanced Github Actions integration.
 
 ## Configuration
 
-The `.drift.yaml` file defines the rules for checking drift.
+Drift uses a `.drift.yaml` file to map code to documentation. *(Note: Drift will also automatically discover `.drift.yml`, `drift.yaml`, and `drift.yml` if you prefer).*
 
-- **`provider`**: The backend provider to use for assessing drift. Currently supported providers are:
-  - `"gemini"`: Uses the Google Gemini API.
-  - `"openai"`: Uses the OpenAI API.
-- **`rules`**: A list of rules to check.
-  - **`name`**: A descriptive name for the rule.
-  - **`code`**: A list of glob patterns for the code files.
-  - **`docs`**: A list of glob patterns for the documentation files.
+- **`provider`**: The backend LLM (`gemini`, `openai`, or `anthropic`).
+- **`rules`**: A list of mappings to evaluate.
+  - **`name`**: A readable identifier for the rule.
+  - **`code`**: Glob patterns targeting your source code files.
+  - **`docs`**: Glob patterns targeting the corresponding documentation files.
 
 ### Example `.drift.yaml`
 
@@ -82,12 +88,12 @@ The `.drift.yaml` file defines the rules for checking drift.
 version: 1
 provider: gemini
 rules:
-  - name: "User API Documentation"
+  - name: "User API"
     code:
       - "src/api/user.go"
     docs:
       - "docs/api/users.md"
-  - name: "Authentication Service"
+  - name: "Authentication"
     code:
       - "src/auth/**/*.go"
     docs:
@@ -98,7 +104,9 @@ rules:
 
 ### Gemini
 
-To use the Gemini provider, you need to set the `GEMINI_API_KEY` environment variable to your Gemini API key.
+### Gemini
+
+Authenticate the Google Gemini API:
 
 ```bash
 export GEMINI_API_KEY="your-api-key"
@@ -106,7 +114,7 @@ export GEMINI_API_KEY="your-api-key"
 
 ### OpenAI
 
-To use the OpenAI provider, you need to set the `OPENAI_API_KEY` environment variable to your OpenAI API key.
+Authenticate the OpenAI API:
 
 ```bash
 export OPENAI_API_KEY="your-api-key"

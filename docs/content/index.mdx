@@ -1,18 +1,14 @@
 # Introduction
 
-Drift is a command-line tool to detect and prevent drift between your code and your documentation.
-It uses large language models to assess if your documentation accurately reflects your code.
+Drift uses large language models to detect when your code outpaces your documentation.
 
-## Why Drift?
+## Why use Drift?
 
-Keeping documentation in sync with a rapidly evolving codebase is a common challenge.
-Drift helps automate this process by leveraging the power of LLMs to understand the semantics of your code and documentation, and identify discrepancies.
+Documentation falls behind. It's inevitable. 
 
-This tool is particularly useful for ensuring that your API documentation accurately reflects the implementation of your API.
+Drift automates the synchronization process by using AI to semantically compare your codebase against your documentation, instantly catching discrepancies before they ship. No more outdated READMEs or misleading API references in production.
 
-## Key Features
-
-- **LLM-Powered Assessment:** Drift uses large language models to perform a semantic comparison between your code and documentation.
-- **Flexible Configuration:** Define rules in a simple YAML file to specify which code and documentation files to compare.
-- **CI/CD Integration:** Easily integrate Drift into your CI/CD pipeline to catch documentation drift before it becomes a problem.
-- **Multiple Provider Support:** Drift supports multiple LLM providers, with Gemini being the first.
+- **Never Ship Outdated Docs:** Catch documentation drift the moment it happens. Keep your users happy and your API references perfectly accurate.
+- **Automated PR Enforcement:** Put documentation review on autopilot. Drift runs natively in your CI/CD pipeline to flag missing updates before they merge.
+- **Zero Friction Setup:** Map your entire codebase to your documentation in minutes using our interactive CLI wizard and wildcard-friendly YAML.
+- **Model Agnostic:** Plug and play with your preferred LLM provider. First-class support for Gemini, OpenAI, and Anthropic.

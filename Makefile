@@ -62,3 +62,7 @@ lint:
 
 lint-fix:
 	$(shell go env GOPATH)/bin/golangci-lint run --fix ./...
+
+docs-dev:
+	@echo "Starting local documentation development server..."
+	@cd docs && npm install && npm run dev
