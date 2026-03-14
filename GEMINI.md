@@ -104,7 +104,7 @@ Uses Cobra for command-line interface. Contains zero business logic.
 **cmd/root.go** - Defines the root `drift` command.
 
 **cmd/init.go** - Defines `drift init`.
-- Calls `config.CreateScaffold()` from `/pkg/config`.
+- Calls `initwizard.RunWizard()` from `/pkg/initwizard` to run the interactive setup.
 
 **cmd/check.go** - Defines `drift check`.
 - Reads flags like `--config` and `--changed-files`.
