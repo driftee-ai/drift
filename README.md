@@ -38,7 +38,7 @@ drift --version
 
 ### `drift init`
 
-Initializes a new project by launching an interactive setup wizard. It automatically discovers and maps your codebase to your documentation.
+Initializes a new project by launching an interactive setup wizard that automatically discovers and maps your codebase to your documentation.
 
 ```bash
 drift init
