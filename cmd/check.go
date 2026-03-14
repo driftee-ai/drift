@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -78,7 +79,7 @@ var checkCmd = &cobra.Command{
 		for _, result := range results {
 			fmt.Printf("  - Rule: %s\n", result.Rule.Name)
 
-			if result.Error != nil && strings.Contains(result.Error.Error(), "missing code or doc files") {
+			if errors.Is(result.Error, checker.ErrMissingFiles) {
 				fmt.Printf("    Result: Out of Sync (missing code or doc files)\n")
 				allInSync = false
 				continue

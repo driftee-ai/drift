@@ -12,6 +12,9 @@ import (
 	"github.com/google/generative-ai-go/genai"
 )
 
+// ErrMissingFiles is returned when a rule finds zero matching code or documentation files.
+var ErrMissingFiles = fmt.Errorf("missing code or doc files")
+
 // AssessmentResult holds the structured response from the LLM.
 type AssessmentResult struct {
 	IsInSync            bool   `json:"is_in_sync"`
@@ -70,12 +73,13 @@ func (c *Checker) EvaluateRules(ctx context.Context, rules []config.Rule, diffOn
 			continue
 		}
 
-		codeStr := ""
+		var codeStrBuilder strings.Builder
 		totalCodeSize := 0
 		for path, content := range codeContents {
 			totalCodeSize += len(content)
-			codeStr += fmt.Sprintf("\n--- Code file: %s ---\n%s\n", path, content)
+			codeStrBuilder.WriteString(fmt.Sprintf("\n--- Code file: %s ---\n%s\n", path, content))
 		}
+		codeStr := codeStrBuilder.String()
 		result.CodeFilesCount = len(codeFiles)
 		result.CodeTotalBytes = totalCodeSize
 
@@ -101,7 +105,7 @@ func (c *Checker) EvaluateRules(ctx context.Context, rules []config.Rule, diffOn
 			continue
 		}
 		if len(codeFiles) == 0 || len(docFiles) == 0 {
-			result.Error = fmt.Errorf("missing code or doc files")
+			result.Error = ErrMissingFiles
 			result.IsInSync = false
 			results = append(results, result)
 			continue
