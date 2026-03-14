@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/huh/spinner"
@@ -85,8 +84,8 @@ func RunWizard(fastMode bool) error {
 		}
 	}
 
-	// Step 4: Interactive Rule Review
-	finalRules, err := reviewRules(rules)
+	// Step 4: Full-Screen Interactive Rule Review
+	finalRules, err := runReviewApp(rules)
 	if err != nil {
 		return err
 	}
@@ -116,84 +115,4 @@ func RunWizard(fastMode bool) error {
 	fmt.Println("\n✨ Success! Generated .drift.yaml configuration.")
 	fmt.Println("You can now run 'drift check' to ensure your documentation is up to date.")
 	return nil
-}
-
-func reviewRules(rules []config.Rule) ([]config.Rule, error) {
-	var finalRules []config.Rule
-	fmt.Println("\nReviewing Proposed Rules:")
-	fmt.Println("The AI has analyzed your repo and suggested the following rules.")
-
-	for _, rule := range rules {
-		var action string
-
-		codeGlob := strings.Join(rule.Code, ", ")
-		docGlob := strings.Join(rule.Docs, ", ")
-
-		if codeGlob == "" {
-			codeGlob = "**/*.go"
-		}
-		if docGlob == "" {
-			docGlob = "**/*.md"
-		}
-
-		form := huh.NewForm(
-			huh.NewGroup(
-				huh.NewSelect[string]().
-					Title(fmt.Sprintf("Discovered Rule: %s", rule.Name)).
-					Description(fmt.Sprintf("Code: %s\nDocs: %s", codeGlob, docGlob)).
-					Options(
-						huh.NewOption("✅ Accept as is", "accept"),
-						huh.NewOption("✏️  Edit rule", "edit"),
-						huh.NewOption("❌ Discard", "discard"),
-					).
-					Value(&action),
-			),
-		)
-
-		if err := form.Run(); err != nil {
-			return nil, err
-		}
-
-		switch action {
-		case "accept":
-			finalRules = append(finalRules, rule)
-		case "discard":
-			continue
-		case "edit":
-			editForm := huh.NewForm(
-				huh.NewGroup(
-					huh.NewInput().
-						Title("Rule Name").
-						Value(&rule.Name),
-					huh.NewInput().
-						Title("Code File Glob (comma separated)").
-						Value(&codeGlob),
-					huh.NewInput().
-						Title("Documentation File Glob (comma separated)").
-						Value(&docGlob),
-				),
-			)
-			if err := editForm.Run(); err != nil {
-				return nil, err
-			}
-
-			// Simple split and trim
-			rule.Code = []string{}
-			for _, p := range strings.Split(codeGlob, ",") {
-				if trimmed := strings.TrimSpace(p); trimmed != "" {
-					rule.Code = append(rule.Code, trimmed)
-				}
-			}
-
-			rule.Docs = []string{}
-			for _, p := range strings.Split(docGlob, ",") {
-				if trimmed := strings.TrimSpace(p); trimmed != "" {
-					rule.Docs = append(rule.Docs, trimmed)
-				}
-			}
-			finalRules = append(finalRules, rule)
-		}
-	}
-
-	return finalRules, nil
 }
