@@ -97,3 +97,13 @@ When the action detects drift:
 2.  It will **exit with a failure code**, which will flag the check as "failed" on your Pull Request.
 
 This doesn't strictly prevent merging (unless you configure it as a required check in GitHub settings), but it serves as a strong signal to the reviewer that the documentation needs attention.
+
+## Status Badge
+
+Let your users know that your documentation is always perfectly in sync by adding a Drift status badge to your `README.md`. 
+
+Assuming your Drift workflow is named `drift.yml` (like the examples above) and is located at `.github/workflows/drift.yml`, you can add this snippet to your repository:
+
+```markdown
+[![Drift](https://github.com/your-username/your-repo/actions/workflows/drift.yml/badge.svg)](https://github.com/your-username/your-repo/actions/workflows/drift.yml)
+```

@@ -1,5 +1,8 @@
 # Drift
 
+[![Running Tests](https://github.com/driftee-ai/drift/actions/workflows/tests.yml/badge.svg)](https://github.com/driftee-ai/drift/actions/workflows/tests.yml)
+[![Drift](https://github.com/driftee-ai/drift/actions/workflows/drift.yml/badge.svg)](https://github.com/driftee-ai/drift/actions/workflows/drift.yml)
+
 [**Full Documentation**](https://driftee-ai.github.io/drift)
 
 ## Why use Drift?
