@@ -31,7 +31,10 @@ func (m *Mapper) MapFiles(ctx context.Context, files map[string]string, fastMode
 	promptBuilder.WriteString("Your task is to group the provided files into logical 'rules'.\n")
 	promptBuilder.WriteString("Each rule should map specific code paths to specific documentation paths that document them.\n")
 	promptBuilder.WriteString("Use glob patterns (e.g., 'src/api/**/*.go') to describe the paths.\n")
-	promptBuilder.WriteString("Give each rule a descriptive name.\n")
+	promptBuilder.WriteString("Return ONLY a JSON object containing a list of 'rules'. Each rule MUST have three fields:\n")
+	promptBuilder.WriteString("- 'name': A short descriptive name for the rule.\n")
+	promptBuilder.WriteString("- 'code': An array of strings containing glob patterns for the related code files.\n")
+	promptBuilder.WriteString("- 'docs': An array of strings containing glob patterns for the related documentation files.\n")
 
 	if fastMode {
 		promptBuilder.WriteString("\nHere are the files in the repository:\n")
