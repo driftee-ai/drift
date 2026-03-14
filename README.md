@@ -38,6 +38,12 @@ drift init
 
 *(You can use `drift init --fast` to only use file paths for discovery, making it quicker and cheaper if you have a large repository.)*
 
+**Specify a target directory:**
+
+```bash
+drift init --dir /path/to/target/directory
+```
+
 ### `drift check`
 
 Checks for drift between your code and documentation based on the rules in your `.drift.yaml` file.
