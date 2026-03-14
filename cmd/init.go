@@ -2,24 +2,29 @@ package cmd
 
 import (
 	"fmt"
-	"log"
+	"os"
 
-	"github.com/driftee-ai/drift/pkg/config"
+	"github.com/driftee-ai/drift/pkg/initwizard"
 	"github.com/spf13/cobra"
 )
 
+var initFastMode bool
+var initDir string
+
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initializes a new .drift.yaml configuration file.",
+	Short: "Interactive wizard to bootstrap your .drift.yaml configuration.",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := config.CreateScaffold(".drift.yaml")
+		err := initwizard.RunWizard(initDir, initFastMode)
 		if err != nil {
-			log.Fatalf("Failed to create .drift.yaml: %v", err)
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
 		}
-		fmt.Println(".drift.yaml created successfully.")
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(initCmd)
+	initCmd.Flags().BoolVar(&initFastMode, "fast", false, "Use filename-only analysis for faster (but potentially less accurate) rule discovery")
+	initCmd.Flags().StringVarP(&initDir, "dir", "d", ".", "Directory to analyze")
 }

@@ -13,9 +13,9 @@ type Config struct {
 }
 
 type Rule struct {
-	Name string   `yaml:"name"`
-	Code []string `yaml:"code"`
-	Docs []string `yaml:"docs"`
+	Name string   `yaml:"name" json:"name"`
+	Code []string `yaml:"code" json:"code"`
+	Docs []string `yaml:"docs" json:"docs"`
 }
 
 // Load finds and unmarshals a .drift.yaml file

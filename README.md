@@ -30,10 +30,18 @@ drift --version
 
 ### `drift init`
 
-Initializes a new project by creating a `.drift.yaml` configuration file in the current directory.
+Initializes a new project by running an interactive setup wizard that automatically discovers mappings between your code and documentation.
 
 ```bash
 drift init
+```
+
+*(You can use `drift init --fast` to only use file paths for discovery, making it quicker and cheaper if you have a large repository.)*
+
+**Specify a target directory:**
+
+```bash
+drift init --dir /path/to/target/directory
 ```
 
 ### `drift check`
