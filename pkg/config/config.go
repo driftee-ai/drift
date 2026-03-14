@@ -29,7 +29,6 @@ func Load(path string) (*Config, error) {
 			for _, fb := range fallbacks {
 				if d, e := os.ReadFile(fb); e == nil {
 					data = d
-					path = fb
 					break
 				}
 			}
