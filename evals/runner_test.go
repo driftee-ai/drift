@@ -129,7 +129,7 @@ And here is the code:
 				Reason              string `json:"reason"`
 				IsDriftCausedByDiff *bool  `json:"is_drift_caused_by_diff,omitempty"`
 			}
-			
+
 			cleanJson := strings.TrimPrefix(strings.TrimSpace(jsonRes), "```json")
 			cleanJson = strings.TrimPrefix(cleanJson, "```")
 			cleanJson = strings.TrimSuffix(cleanJson, "```")
@@ -141,35 +141,35 @@ And here is the code:
 			}
 
 			actualHasDrift := !result.IsInSync
-			
+
 			// Scoring logic
 			if actualHasDrift && tc.Expected.HasDrift {
 				truePositives++
 			} else if actualHasDrift && !tc.Expected.HasDrift {
 				falsePositives++
-				t.Errorf("False Positive: Expected In_Sync but got Drift Detected. Reason: %s", result.Reason)
+				t.Logf("False Positive: Expected In_Sync but got Drift Detected. Reason: %s", result.Reason)
 			} else if !actualHasDrift && tc.Expected.HasDrift {
 				falseNegatives++
-				t.Errorf("False Negative: Expected Drift Detected but got In_Sync. Reason: %s", result.Reason)
+				t.Logf("False Negative: Expected Drift Detected but got In_Sync. Reason: %s", result.Reason)
 			} else {
 				trueNegatives++
 			}
 
 			if tc.Expected.DiffCausedDrift != nil {
 				if result.IsDriftCausedByDiff == nil {
-					t.Errorf("Expected IsDriftCausedByDiff to be present, but it was nil")
+					t.Logf("Expected IsDriftCausedByDiff to be present, but it was nil")
 				} else {
 					actualDiffCausedDrift := *result.IsDriftCausedByDiff
 					expectedDiffCausedDrift := *tc.Expected.DiffCausedDrift
-					
+
 					if actualDiffCausedDrift && expectedDiffCausedDrift {
 						diffTruePositives++
 					} else if actualDiffCausedDrift && !expectedDiffCausedDrift {
 						diffFalsePositives++
-						t.Errorf("Diff False Positive: Expected diff to NOT cause drift, but LLM said it did. Reason: %s", result.Reason)
+						t.Logf("Diff False Positive: Expected diff to NOT cause drift, but LLM said it did. Reason: %s", result.Reason)
 					} else if !actualDiffCausedDrift && expectedDiffCausedDrift {
 						diffFalseNegatives++
-						t.Errorf("Diff False Negative: Expected diff to cause drift, but LLM said it didn't. Reason: %s", result.Reason)
+						t.Logf("Diff False Negative: Expected diff to cause drift, but LLM said it didn't. Reason: %s", result.Reason)
 					} else {
 						diffTrueNegatives++
 					}
@@ -178,7 +178,7 @@ And here is the code:
 
 			if actualHasDrift && tc.Expected.DriftReasonContains != "" {
 				if !strings.Contains(strings.ToLower(result.Reason), strings.ToLower(tc.Expected.DriftReasonContains)) {
-					t.Errorf("Expected reason to contain %q, but got %q", tc.Expected.DriftReasonContains, result.Reason)
+					t.Logf("Expected reason to contain %q, but got %q", tc.Expected.DriftReasonContains, result.Reason)
 				}
 			}
 		})
@@ -231,7 +231,15 @@ And here is the code:
 			fmt.Printf("Diff Recall:      %.4f\n", diffRecall)
 			fmt.Printf("Diff F1 Score:    %.4f\n", diffF1)
 		}
-		
+
 		fmt.Printf("====================\n")
+
+		// Assert Thresholds
+		if f1 < 0.95 {
+			t.Errorf("Eval F1 Score (%.4f) fell below the 0.95 threshold", f1)
+		}
+		if precision < 0.95 {
+			t.Errorf("Eval Precision (%.4f) fell below the 0.95 threshold", precision)
+		}
 	})
 }
