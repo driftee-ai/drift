@@ -73,7 +73,18 @@ drift check --config /path/to/your/config.yaml
 
 **Check only changed files:**
 
-For lightning-fast CI/CD pipelines, use `--changed-files` to verify only the code modified in an active pull request. See the [full documentation](https://driftee-ai.github.io/drift) for advanced Github Actions integration.
+For lightning-fast CI/CD pipelines, use `--changed-files` to verify only the code modified in an active pull request. 
+
+**Strict Diff Mode:**
+
+By default `drift` will flag any drift in the changed files. You can use `--diff-only` to strictly fail *only* if the given git diff directly caused the drift. Note that when using `--diff-only`, you must provide the diff contents via `--diff`:
+
+```bash
+git diff origin/main...HEAD > pr.diff
+drift check --changed-files ... --diff-only --diff pr.diff
+```
+
+See the [full documentation](https://driftee-ai.github.io/drift) for advanced Github Actions integration.
 
 ## Configuration
 

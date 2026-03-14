@@ -64,6 +64,8 @@ jobs:
           diff-only: true # Recommended: Only fail if the PR caused the drift
 ```
 
+*(Note: The `drift check` CLI strictly requires diff contents via the `--diff` flag when `--diff-only` is used. However, the `drift-action` intelligently handles this for you by running `git diff` under the hood!)*
+
 #### Option 2: Using Native Git (No Dependencies)
 
 If you prefer not to add external dependencies, you can use native `git` commands to find the difference between the PR branch and the target branch.
