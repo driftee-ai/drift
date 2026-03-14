@@ -1,0 +1,27 @@
+name: "Diff caused deleted field (True Positive)"
+files:
+  - path: src/config.go
+    content: |
+      package config
+
+      // Config holds application settings.
+      type Config struct {
+      	Host string `json:"host"`
+      	Port int    `json:"port"`
+      }
+  - path: docs/config.md
+    content: |
+      # Application Configuration
+
+      The Config object expects a `host` (string) and a `port` (int). It also optionally takes a `debug` (boolean) flag.
+diff: |
+  @@ -4,5 +4,4 @@
+   type Config struct {
+   	Host string `json:"host"`
+   	Port int    `json:"port"`
+  -	Debug bool  `json:"debug"`
+   }
+expected:
+  has_drift: true
+  drift_reason_contains: "debug"
+  diff_caused_drift: true

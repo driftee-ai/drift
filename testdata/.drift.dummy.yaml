@@ -1,0 +1,8 @@
+version: 1
+provider: dummy
+rules:
+  - name: Example API Documentation
+    code:
+      - testdata/src/api/**/*.go
+    docs:
+      - testdata/docs/api/**/*.md

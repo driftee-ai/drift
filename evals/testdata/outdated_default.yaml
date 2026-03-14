@@ -1,0 +1,21 @@
+name: "Outdated default values"
+files:
+  - path: src/server.go
+    content: |
+      package server
+
+      import "time"
+
+      type Config struct {
+          // Timeout sets the maximum duration before canceling. Defaults to 30s.
+          Timeout time.Duration
+      }
+  - path: docs/server.md
+    content: |
+      # Configuration
+      
+      You can configure the server using the Config struct.
+      - `Timeout`: Max duration to wait. (Default: 60s)
+expected:
+  has_drift: true
+  drift_reason_contains: "default"

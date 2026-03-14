@@ -1,0 +1,13 @@
+version: 1
+provider: dummy
+rules:
+  - name: Rule-Go
+    code:
+      - "testdata/src/api/user.go"
+    docs:
+      - "testdata/docs/api/users.md"
+  - name: Rule-MD
+    code:
+      - "main.go"
+    docs:
+      - "README.md"

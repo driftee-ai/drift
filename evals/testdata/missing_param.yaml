@@ -1,0 +1,21 @@
+name: "Missing parameter drift"
+files:
+  - path: src/api.go
+    content: |
+      package api
+
+      // CreateUser creates a new user in the database.
+      func CreateUser(name string, age int) error {
+          return nil
+      }
+  - path: docs/api.md
+    content: |
+      # CreateUser
+      
+      Creates a user.
+      
+      **Parameters:**
+      - `name` (string): The user's name.
+expected:
+  has_drift: true
+  drift_reason_contains: "age"

@@ -1,0 +1,21 @@
+# `drift init`
+
+This command initializes a new project by launching an interactive TUI wizard. The wizard auto-discovers documentation mappings by optionally scanning your code and documentation files using an LLM.
+
+```bash
+drift init
+```
+
+For a faster initial setup that relies purely on file paths without reading their contents, you can use the `--fast` flag:
+
+```bash
+drift init --fast
+```
+
+To initialize `drift` in a specific directory instead of the current working directory, you can use the `--dir` (or `-d`) flag:
+
+```bash
+drift init --dir /path/to/project
+```
+
+This will present interactive options and create a tailored `.drift.yaml` configuration file to get you started.

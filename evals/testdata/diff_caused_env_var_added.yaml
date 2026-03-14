@@ -1,0 +1,32 @@
+name: "Diff caused env var added (True Positive)"
+files:
+  - path: src/client.go
+    content: |
+      package client
+
+      import "os"
+
+      // Connect establishes a connection using the API key.
+      func Connect() error {
+      	mode := os.Getenv("DEBUG_MODE")
+      	key := os.Getenv("API_KEY")
+      	return connect(key, mode)
+      }
+  - path: docs/client.md
+    content: |
+      # Client
+
+      ## Connect
+      Connects to the server using the `API_KEY` environment variable. Returns an error if the connection fails.
+diff: |
+  @@ -6,2 +6,3 @@
+   func Connect() error {
+  +	mode := os.Getenv("DEBUG_MODE")
+   	key := os.Getenv("API_KEY")
+  -	return connect(key)
+  +	return connect(key, mode)
+   }
+expected:
+  has_drift: true
+  drift_reason_contains: "DEBUG_MODE"
+  diff_caused_drift: true

@@ -1,0 +1,22 @@
+name: "Missing struct field"
+files:
+  - path: src/models.go
+    content: |
+      package models
+
+      // User represents a system user.
+      type User struct {
+          ID        string
+          Email     string
+          AvatarURL string
+      }
+  - path: docs/models.md
+    content: |
+      # User Model
+      
+      The User object contains the following properties:
+      * `ID`: The unique identifier
+      * `Email`: The user's email address
+expected:
+  has_drift: true
+  drift_reason_contains: "AvatarURL"

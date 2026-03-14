@@ -1,0 +1,41 @@
+# Configuration
+
+Drift maps code to documentation using a configuration file located in the root of your project.
+
+## File Discovery
+By default, Drift looks for `.drift.yaml` but will automatically fall back to the following filenames in order if they exist:
+1. `.drift.yaml`
+2. `.drift.yml`
+3. `drift.yaml`
+4. `drift.yml`
+
+## Global Settings
+
+- **`version`** (required): The configuration version format. Always `1` for now.
+- **`provider`** (required): The backend LLM provider to use (`gemini`, `openai`, or `anthropic`). Appropriate API keys (`GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`) must be set in your environment.
+
+## Rules
+
+The `rules` array defines exactly what Drift should be analyzing.
+
+- **`name`** (required): A human-readable identifier for the rule.
+- **`code`** (required): An array of glob patterns pointing to the source code files.
+- **`docs`** (required): An array of glob patterns pointing to the corresponding documentation files.
+
+## Example `.drift.yaml`
+
+```yaml
+version: 1
+provider: gemini
+rules:
+  - name: "User API"
+    code:
+      - "src/api/user.go"
+    docs:
+      - "docs/api/users.md"
+  - name: "Authentication"
+    code:
+      - "src/auth/**/*.go"
+    docs:
+      - "docs/auth.md"
+```

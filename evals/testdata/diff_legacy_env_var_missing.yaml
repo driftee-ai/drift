@@ -1,0 +1,32 @@
+name: "Diff legacy env var missing (True Negative)"
+files:
+  - path: src/client.go
+    content: |
+      package client
+
+      import "os"
+
+      // Connect establishes a connection using the API key.
+      func Connect() error {
+      	key := os.Getenv("API_KEY")
+      	if key == "" {
+      		return fmt.Errorf("CRITICAL: missing key")
+      	}
+      	return nil
+      }
+  - path: docs/client.md
+    content: |
+      # Client
+
+      ## Connect
+      Connects to the server. Returns an error if connection fails.
+diff: |
+  @@ -6,3 +6,3 @@
+   	if key == "" {
+  -		return fmt.Errorf("missing key")
+  +		return fmt.Errorf("CRITICAL: missing key")
+   	}
+expected:
+  has_drift: true
+  drift_reason_contains: "api key"
+  diff_caused_drift: false

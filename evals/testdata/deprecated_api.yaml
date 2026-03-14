@@ -1,0 +1,22 @@
+name: "Deprecated API"
+files:
+  - path: src/client.go
+    content: |
+      package client
+
+      // FetchData gets the data.
+      // Deprecated: Use FetchDataV2 instead.
+      func FetchData() []byte {
+          return nil
+      }
+      
+      // FetchDataV2 is the new way to get data.
+      func FetchDataV2() []byte { return nil }
+  - path: docs/client.md
+    content: |
+      # Data Client
+      
+      To retrieve data, always use the canonical `FetchData()` function.
+expected:
+  has_drift: true
+  drift_reason_contains: "deprecated"

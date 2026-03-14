@@ -1,0 +1,27 @@
+name: "Missing environment variable"
+files:
+  - path: src/db.go
+    content: |
+      package db
+
+      import "os"
+
+      // Connect establishes a connection to the database.
+      func Connect() error {
+          pass := os.Getenv("DB_PASS")
+          if pass == "" {
+              panic("DB_PASS is required")
+          }
+          return nil
+      }
+  - path: docs/db.md
+    content: |
+      # Database Connection
+      
+      Call `Connect()` to establish a connection to the database.
+      
+      **Returns:**
+      - `error`: If the operation fails.
+expected:
+  has_drift: true
+  drift_reason_contains: "DB_PASS"

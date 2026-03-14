@@ -1,0 +1,64 @@
+# `drift check`
+
+Evaluates your codebase against your documentation to detect out-of-sync content based on your `.drift.yaml` configuration.
+
+## Basic Usage
+
+Check all tracked files:
+
+```bash
+drift check
+```
+
+Use a custom configuration file:
+
+```bash
+drift check --config /path/to/custom/drift.yaml
+```
+
+## Advanced Checking
+
+### Check Changed Files (Action/CI)
+
+For lightning-fast CI/CD pipelines, verify only files that have changed in an active pull request:
+
+```bash
+# Pass explicitly modified files
+drift check --changed-files "pkg/server/main.go,docs/api/server.md"
+```
+
+Combined with `git` to seamlessly automate pull request checks:
+
+```bash
+# Get PR files and pass them directly to Drift
+CHANGED_FILES=$(git diff --name-only origin/main...HEAD | tr '\n' ',')
+drift check --changed-files "$CHANGED_FILES"
+```
+
+See our [CI/CD Integration](../ci-cd.mdx) guide for more information and GitHub Actions examples.
+
+### Diff-Aware Strictness (`--diff-only`)
+
+By default, Drift is **strict**. It will fail if *any* drift exists in the evaluated files, even if that documentation debt is years old.
+
+To seamlessly integrate into legacy codebases without blocking PRs, use `--diff-only`. This mode evaluates the exact git diff. It will **only** fail if the LLM determines your *new code changes* directly caused the documentation drift. Legacy drift is reported as a soft warning.
+
+```bash
+# Forgive legacy documentation debt, but block new drift
+git diff origin/main...HEAD > pr.diff
+drift check --changed-files "$CHANGED_FILES" --diff-only --diff pr.diff
+```
+
+## Example Output
+
+If Drift detects discrepancies, it exits with a non-zero code to block your pipeline and provides the LLM's explicit reasoning:
+
+```
+Loaded 1 rules from .drift.yaml (provider: gemini)
+  - Rule: User API
+    Found 1 code files, total size: 1234 bytes
+    Found 1 doc files, total size: 567 bytes
+    Result: Out of Sync (Reason: The `GetUser` function in `user.go` now includes a `context.Context` parameter, which is not reflected in the `users.md` documentation.)
+Drift detected
+```
+

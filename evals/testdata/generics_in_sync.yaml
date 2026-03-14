@@ -1,0 +1,21 @@
+name: "Generics perfectly in sync"
+files:
+  - path: src/utils.go
+    content: |
+      package utils
+
+      // Map transforms a slice of type T into a slice of type R using the provided function.
+      func Map[T any, R any](input []T, transform func(T) R) []R {
+          result := make([]R, len(input))
+          for i, v := range input {
+              result[i] = transform(v)
+          }
+          return result
+      }
+  - path: docs/utils.md
+    content: |
+      # Map utility
+      
+      Takes a list of items of any type, applies a transformation function to each item, and returns a new list of the transformed results.
+expected:
+  has_drift: false

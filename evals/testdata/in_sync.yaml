@@ -1,0 +1,23 @@
+name: "In sync perfect match"
+files:
+  - path: src/api.go
+    content: |
+      package api
+
+      // DeleteUser deletes a user from the database.
+      func DeleteUser(id string) error {
+          return nil
+      }
+  - path: docs/api.md
+    content: |
+      # DeleteUser
+      
+      Deletes a user from the database.
+      
+      **Parameters:**
+      - `id` (string): The user's unique identifier.
+
+      **Returns:**
+      - `error`: Optional error if the operation fails.
+expected:
+  has_drift: false
