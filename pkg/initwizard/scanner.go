@@ -21,16 +21,16 @@ var defaultExcludes = []string{
 
 // ScanProject finds all code and documentation files.
 // In fastMode, it only collects file paths. Otherwise, it also reads file contents (up to 256KB).
-func ScanProject(fastMode bool) (map[string]string, error) {
+func ScanProject(dir string, fastMode bool) (map[string]string, error) {
 	files := make(map[string]string)
 
-	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
 		if d.IsDir() {
-			if path == "." {
+			if path == dir {
 				return nil
 			}
 			for _, exclude := range defaultExcludes {

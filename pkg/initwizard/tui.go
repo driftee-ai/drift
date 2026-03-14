@@ -1,16 +1,20 @@
 package initwizard
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/progress"
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/driftee-ai/drift/pkg/config"
 	"github.com/driftee-ai/drift/pkg/files"
+	"github.com/driftee-ai/drift/pkg/llm"
 )
 
 var (
@@ -30,6 +34,23 @@ const (
 	focusInputDocs
 )
 
+type screenState int
+
+const (
+	stateProvider screenState = iota
+	stateLoading
+	stateReview
+	stateSummary
+)
+
+type providerItem struct {
+	id, title, desc string
+}
+
+func (i providerItem) Title() string       { return i.title }
+func (i providerItem) Description() string { return i.desc }
+func (i providerItem) FilterValue() string { return i.title }
+
 type ruleItem struct {
 	rule config.Rule
 }
@@ -41,10 +62,22 @@ func (i ruleItem) Description() string {
 func (i ruleItem) FilterValue() string { return i.rule.Name }
 
 type tuiModel struct {
-	rules      []config.Rule
-	list       list.Model
-	inputs     []textinput.Model
-	focusIndex focusState
+	state      screenState
+	spinner    spinner.Model
+	prog       progress.Model
+	loadingMsg string
+	err        error
+
+	dir      string
+	fastMode bool
+	provider string
+	usage    llm.Usage
+
+	providerList list.Model
+	rules        []config.Rule
+	list         list.Model
+	inputs       []textinput.Model
+	focusIndex   focusState
 
 	viewport viewport.Model
 	ready    bool
@@ -56,23 +89,88 @@ type tuiModel struct {
 	saved    bool
 }
 
-func initialModel(rules []config.Rule) tuiModel {
-	items := make([]list.Item, len(rules))
-	for i, r := range rules {
+func initialModel(dir string, fastMode bool) tuiModel {
+	s := spinner.New()
+	s.Spinner = spinner.Points
+	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+
+	prog := progress.New(progress.WithScaledGradient("#FF7CCB", "#FDFF8C"))
+
+	items := []list.Item{
+		providerItem{id: "gemini", title: "Google Gemini (Default)", desc: "Uses the Gemini API for fast, reliable auto-discovery (requires GEMINI_API_KEY)"},
+		providerItem{id: "openai", title: "OpenAI", desc: "Uses OpenAI's models (requires OPENAI_API_KEY)"},
+		providerItem{id: "anthropic", title: "Anthropic", desc: "Uses Claude models (requires ANTHROPIC_API_KEY)"},
+	}
+
+	pList := list.New(items, list.NewDefaultDelegate(), 0, 0)
+	pList.Title = "Select an LLM Provider for Auto-Discovery"
+	pList.Styles.Title = titleStyle
+	pList.SetShowStatusBar(false)
+	pList.SetFilteringEnabled(false)
+
+	return tuiModel{
+		state:        stateProvider,
+		spinner:      s,
+		prog:         prog,
+		loadingMsg:   "Analyzing repository...",
+		dir:          dir,
+		fastMode:     fastMode,
+		providerList: pList,
+		focusIndex:   focusList,
+	}
+}
+
+type scanResultMsg struct {
+	files map[string]string
+	err   error
+}
+
+type mapResultMsg struct {
+	rules []config.Rule
+	usage llm.Usage
+	err   error
+}
+
+func (m tuiModel) Init() tea.Cmd {
+	return nil
+}
+
+func (m tuiModel) startScan() tea.Cmd {
+	return func() tea.Msg {
+		files, err := ScanProject(m.dir, m.fastMode)
+		return scanResultMsg{files: files, err: err}
+	}
+}
+
+func (m tuiModel) startMap(files map[string]string) tea.Cmd {
+	return func() tea.Msg {
+		client, err := llm.New(m.provider)
+		if err != nil {
+			return mapResultMsg{err: err}
+		}
+		mapper := NewMapper(client)
+		rules, usage, err := mapper.MapFiles(context.Background(), files, m.fastMode)
+		return mapResultMsg{rules: rules, usage: usage, err: err}
+	}
+}
+
+func (m *tuiModel) initReviewState() {
+	items := make([]list.Item, len(m.rules))
+	for i, r := range m.rules {
 		items[i] = ruleItem{rule: r}
 	}
 
-	l := list.New(items, list.NewDefaultDelegate(), 0, 0)
-	l.Title = "Discovered Rules"
-	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false) // Disable filtering to keep it clean for now
+	m.list = list.New(items, list.NewDefaultDelegate(), 0, 0)
+	m.list.SetShowTitle(false)
+	m.list.SetShowStatusBar(false)
+	m.list.SetFilteringEnabled(false)
 
 	var inputs []textinput.Model = make([]textinput.Model, 3)
 	inputs[0] = textinput.New()
 	inputs[0].Placeholder = "Rule Name"
 	inputs[0].Focus()
-	inputs[0].PromptStyle = focusedPaneStyle
-	inputs[0].TextStyle = focusedPaneStyle
+	inputs[0].PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	inputs[0].TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
 
 	inputs[1] = textinput.New()
 	inputs[1].Placeholder = "Code Globs (comma separated)"
@@ -80,23 +178,45 @@ func initialModel(rules []config.Rule) tuiModel {
 	inputs[2] = textinput.New()
 	inputs[2].Placeholder = "Doc Globs (comma separated)"
 
-	// Load initial data if items exist
-	if len(rules) > 0 {
-		inputs[0].SetValue(rules[0].Name)
-		inputs[1].SetValue(strings.Join(rules[0].Code, ", "))
-		inputs[2].SetValue(strings.Join(rules[0].Docs, ", "))
+	if len(m.rules) > 0 {
+		inputs[0].SetValue(m.rules[0].Name)
+		inputs[1].SetValue(strings.Join(m.rules[0].Code, ", "))
+		inputs[2].SetValue(strings.Join(m.rules[0].Docs, ", "))
 	}
-
-	return tuiModel{
-		rules:      rules,
-		list:       l,
-		inputs:     inputs,
-		focusIndex: focusList,
-	}
+	m.inputs = inputs
+	m.focusIndex = focusList
+	m.ready = false
 }
 
-func (m tuiModel) Init() tea.Cmd {
-	return textinput.Blink
+func (m *tuiModel) resizeComponents() {
+	if m.width == 0 || m.height == 0 {
+		return
+	}
+	h, _ := docStyle.GetFrameSize()
+
+	targetPaneHeight := m.height - 12
+	paneContentHeight := targetPaneHeight - 4 // border + padding = 4
+
+	listHeight := paneContentHeight - 3 // title and spacing = 3 lines
+	if listHeight < 0 {
+		listHeight = 0
+	}
+	m.list.SetSize(m.width/3-h-2, listHeight)
+
+	viewportHeight := paneContentHeight - 17 // inputs, labels, titles and newlines = 17 lines
+	if viewportHeight < 0 {
+		viewportHeight = 0
+	}
+
+	if !m.ready {
+		m.viewport = viewport.New((m.width*2)/3-h-2, viewportHeight)
+		m.viewport.SetContent("Glob matched files will appear here...")
+		m.ready = true
+		m.updateViewportContent()
+	} else {
+		m.viewport.Width = (m.width*2)/3 - h - 2
+		m.viewport.Height = viewportHeight
+	}
 }
 
 func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -110,57 +230,76 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.quitting = true
 			return m, tea.Quit
 		case "esc":
-			if m.focusIndex != focusList {
+			if m.state == stateReview && m.focusIndex != focusList {
 				m.setFocus(focusList)
 				return m, nil
 			}
 			m.quitting = true
 			return m, tea.Quit
-		case "ctrl+s":
-			m.saved = true
-			m.quitting = true
-			return m, tea.Quit
-		case "tab", "shift+tab", "up", "down":
-			if m.focusIndex == focusList {
-				// List specific navigation
-				m.list, cmd = m.list.Update(msg)
-				m.loadCurrentRuleIntoInputs()
-				return m, cmd
-			}
-
-			// Form navigation
-			s := msg.String()
-
-			// Move up and down the form, and pop back out to the list
-			if s == "up" || s == "shift+tab" {
-				m.focusIndex--
-				if m.focusIndex < focusList {
-					m.focusIndex = focusInputDocs
+		case "tab", "shift+tab":
+			if m.state == stateReview {
+				s := msg.String()
+				if s == "shift+tab" {
+					m.focusIndex--
+					if m.focusIndex < focusList {
+						m.focusIndex = focusInputDocs
+					}
+				} else {
+					m.focusIndex++
+					if m.focusIndex > focusInputDocs {
+						m.focusIndex = focusList
+					}
 				}
-			} else {
-				m.focusIndex++
-				if m.focusIndex > focusInputDocs {
-					m.focusIndex = focusList
-				}
-			}
-
-			m.setFocus(m.focusIndex)
-			return m, nil
-
-		case "enter":
-			// If we hit enter on the list, transition into editing
-			if m.focusIndex == focusList {
-				m.setFocus(focusInputName)
+				m.setFocus(m.focusIndex)
 				return m, nil
 			}
-
-			// If editing, save changes back to the list item
-			m.saveInputsToCurrentRule()
-			return m, nil
-
+		case "up", "down":
+			if m.state == stateReview && m.focusIndex != focusList {
+				s := msg.String()
+				if s == "up" {
+					m.focusIndex--
+					if m.focusIndex < focusList {
+						m.focusIndex = focusInputDocs
+					}
+				} else {
+					m.focusIndex++
+					if m.focusIndex > focusInputDocs {
+						m.focusIndex = focusList
+					}
+				}
+				m.setFocus(m.focusIndex)
+				return m, nil
+			}
+		case "enter":
+			if m.state == stateProvider {
+				if item, ok := m.providerList.SelectedItem().(providerItem); ok {
+					m.provider = item.id
+					m.state = stateLoading
+					return m, tea.Batch(m.spinner.Tick, m.startScan())
+				}
+				return m, nil
+			}
+			if m.state == stateReview {
+				if m.focusIndex == focusList {
+					if m.list.Index() == len(m.list.Items())-1 {
+						m.state = stateSummary
+						return m, nil
+					}
+					m.list.CursorDown()
+					m.loadCurrentRuleIntoInputs()
+					return m, nil
+				}
+				m.saveInputsToCurrentRule()
+				m.setFocus(focusList)
+				return m, nil
+			}
+			if m.state == stateSummary {
+				m.saved = true
+				m.quitting = true
+				return m, tea.Quit
+			}
 		case "d", "backspace", "delete":
-			if m.focusIndex == focusList && len(m.list.Items()) > 0 {
-				// Delete the current rule feature
+			if m.state == stateReview && m.focusIndex == focusList && len(m.list.Items()) > 0 {
 				m.list.RemoveItem(m.list.Index())
 				m.loadCurrentRuleIntoInputs()
 				return m, nil
@@ -170,31 +309,74 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-
 		h, v := docStyle.GetFrameSize()
-		m.list.SetSize(m.width/3-h, m.height-v-4)
-
-		if !m.ready {
-			m.viewport = viewport.New((m.width*2)/3-h, m.height-v-15)
-			m.viewport.SetContent("Glob matched files will appear here...")
-			m.ready = true
-		} else {
-			m.viewport.Width = (m.width*2)/3 - h
-			m.viewport.Height = m.height - v - 15
+		m.providerList.SetSize(m.width-h, m.height-v)
+		m.prog.Width = m.width - h - 4
+		if m.state == stateReview {
+			m.resizeComponents()
 		}
+
+	case spinner.TickMsg:
+		if m.state == stateLoading {
+			m.spinner, cmd = m.spinner.Update(msg)
+			return m, cmd
+		}
+
+	case scanResultMsg:
+		if msg.err != nil {
+			m.err = msg.err
+			m.quitting = true
+			return m, tea.Quit
+		}
+		if m.fastMode {
+			m.loadingMsg = fmt.Sprintf("Found %d relevant files. Asking %s LLM to map documentation via file paths...", len(msg.files), m.provider)
+		} else {
+			m.loadingMsg = fmt.Sprintf("Read contents of %d relevant files. Asking %s LLM to map documentation...", len(msg.files), m.provider)
+		}
+		return m, m.startMap(msg.files)
+
+	case mapResultMsg:
+		if msg.err != nil {
+			m.err = msg.err
+			m.quitting = true
+			return m, tea.Quit
+		}
+		m.rules = msg.rules
+		m.usage = msg.usage
+		if len(m.rules) == 0 {
+			m.rules = []config.Rule{
+				{
+					Name: "Example API Documentation",
+					Code: []string{"src/api/**/*.go"},
+					Docs: []string{"docs/api/**/*.md"},
+				},
+			}
+		}
+		m.initReviewState()
+		m.resizeComponents()
+		m.state = stateReview
+		return m, textinput.Blink
 	}
 
-	// Handle list updates
-	if m.focusIndex == focusList {
-		m.list, cmd = m.list.Update(msg)
+	// Route updates by state
+	if m.state == stateProvider {
+		m.providerList, cmd = m.providerList.Update(msg)
 		cmds = append(cmds, cmd)
-	}
-
-	// Handle input updates
-	if m.focusIndex != focusList {
-		cmd = m.updateInputs(msg)
-		cmds = append(cmds, cmd)
-		m.updateViewportContent() // Live preview capability
+	} else if m.state == stateReview {
+		if m.focusIndex == focusList {
+			var wasIndex = m.list.Index()
+			m.list, cmd = m.list.Update(msg)
+			cmds = append(cmds, cmd)
+			if m.list.Index() != wasIndex {
+				m.loadCurrentRuleIntoInputs()
+			}
+		} else {
+			cmd = m.updateInputs(msg)
+			cmds = append(cmds, cmd)
+			if _, ok := msg.(tea.KeyMsg); ok {
+				m.updateViewportContent()
+			}
+		}
 	}
 
 	return m, tea.Batch(cmds...)
@@ -266,16 +448,14 @@ func (m *tuiModel) updateViewportContent() {
 		return
 	}
 
-	// Live glob preview logic goes here!
 	var out strings.Builder
-
 	if m.focusIndex == focusInputCode {
 		out.WriteString("🔍 Previewing Code Globs:\n")
 		globs := splitGlobs(m.inputs[1].Value())
 		matches, _ := files.FindFiles(globs)
 		out.WriteString(fmt.Sprintf("%d files matched.\n\n", len(matches)))
 		for _, match := range matches {
-			out.WriteString("- " + match + "\n")
+			out.WriteString("> " + match + "\n")
 		}
 	} else if m.focusIndex == focusInputDocs {
 		out.WriteString("🔍 Previewing Doc Globs:\n")
@@ -283,7 +463,7 @@ func (m *tuiModel) updateViewportContent() {
 		matches, _ := files.FindFiles(globs)
 		out.WriteString(fmt.Sprintf("%d files matched.\n\n", len(matches)))
 		for _, match := range matches {
-			out.WriteString("- " + match + "\n")
+			out.WriteString("> " + match + "\n")
 		}
 	} else {
 		out.WriteString("Select 'Code Globs' or 'Doc Globs' input to see live evaluations.")
@@ -307,14 +487,50 @@ func (m tuiModel) View() string {
 		return ""
 	}
 
-	// Left pane (List)
+	if m.state == stateProvider {
+		return docStyle.Render(m.providerList.View())
+	}
+
+	if m.state == stateLoading {
+		loadingView := fmt.Sprintf("\n\n  %s %s\n\n", m.spinner.View(), m.loadingMsg)
+		return docStyle.Render(loadingView)
+	}
+
+	if m.state == stateSummary {
+		summary := fmt.Sprintf("\n\n  %s\n\n  %s %d rules configured.\n\n  ⚡ %d tokens used during discovery.\n\n  %s\n\n",
+			titleStyle.Render("Configuration Ready"),
+			"✅", len(m.list.Items()),
+			m.usage.TotalTokens,
+			subtextStyle.Render("Press ENTER to generate .drift.yaml, or ESC to cancel."),
+		)
+		return docStyle.Render(summary)
+	}
+
+	// State Review
+	pct := 0.0
+	if len(m.list.Items()) > 0 {
+		pct = float64(m.list.Index()+1) / float64(len(m.list.Items()))
+	}
+
+	headerStr := fmt.Sprintf("%s\n\n%s %d of %d Rules\n%s\n\n",
+		titleStyle.Render("Drift: Auto-Discovery Wizard"),
+		subtextStyle.Render("Progress:"),
+		m.list.Index()+1,
+		len(m.list.Items()),
+		m.prog.ViewAs(pct),
+	)
+
 	listStyle := paneStyle
 	if m.focusIndex == focusList {
 		listStyle = focusedPaneStyle
 	}
-	leftPane := listStyle.Render(m.list.View())
 
-	// Right pane (Editor)
+	var listContent strings.Builder
+	listContent.WriteString(titleStyle.Render("Discovered Rules"))
+	listContent.WriteString("\n\n")
+	listContent.WriteString(m.list.View())
+	leftPane := listStyle.Width(m.width/3 - 4).Height(m.height - 12).Render(listContent.String())
+
 	editorStyle := paneStyle
 	if m.focusIndex != focusList {
 		editorStyle = focusedPaneStyle
@@ -324,38 +540,47 @@ func (m tuiModel) View() string {
 	editorContent.WriteString(titleStyle.Render("Rule Editor"))
 	editorContent.WriteString("\n\n")
 
+	editorContent.WriteString(subtextStyle.Render("Rule Name") + "\n")
 	editorContent.WriteString(m.inputs[0].View() + "\n\n")
+
+	editorContent.WriteString(subtextStyle.Render("Code Files (Globs)") + "\n")
 	editorContent.WriteString(m.inputs[1].View() + "\n\n")
+
+	editorContent.WriteString(subtextStyle.Render("Documentation Files (Globs)") + "\n")
 	editorContent.WriteString(m.inputs[2].View() + "\n\n")
 
 	editorContent.WriteString(titleStyle.Render("Live Output Preview"))
 	editorContent.WriteString("\n")
 	editorContent.WriteString(m.viewport.View())
 
-	rightPane := editorStyle.Width((m.width*2)/3 - 4).Height(m.height - 4).Render(editorContent.String())
+	rightPane := editorStyle.Width((m.width*2)/3 - 4).Height(m.height - 12).Render(editorContent.String())
 
 	mainView := lipgloss.JoinHorizontal(lipgloss.Top, leftPane, rightPane)
 
-	helpBar := subtextStyle.Render("↑/↓: Navigate • TAB: Switch Pane • ENTER: Edit/Save • D: Delete Rule • CTRL+S: Finish & Generate • ESC: Quit")
+	helpBar := subtextStyle.Render("↑/↓: Navigate • TAB: Edit Rule • ENTER: Accept & Next • D: Delete • ESC: Quit")
 
-	return docStyle.Render(mainView + "\n" + helpBar)
+	return docStyle.Render(headerStr + mainView + "\n\n" + helpBar)
 }
 
-func runReviewApp(rules []config.Rule) ([]config.Rule, error) {
-	p := tea.NewProgram(initialModel(rules), tea.WithAltScreen())
+func runReviewApp(dir string, fastMode bool) ([]config.Rule, llm.Usage, string, error) {
+	p := tea.NewProgram(initialModel(dir, fastMode), tea.WithAltScreen())
 	m, err := p.Run()
 	if err != nil {
-		return nil, err
+		return nil, llm.Usage{}, "", err
 	}
 
 	model := m.(tuiModel)
+	if model.err != nil {
+		return nil, llm.Usage{}, "", model.err
+	}
+
 	if !model.saved {
-		return nil, nil // User quit without saving
+		return nil, llm.Usage{}, "", nil // User quit without saving
 	}
 
 	var finalRules []config.Rule
 	for _, item := range model.list.Items() {
 		finalRules = append(finalRules, item.(ruleItem).rule)
 	}
-	return finalRules, nil
+	return finalRules, model.usage, model.provider, nil
 }

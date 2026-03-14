@@ -24,7 +24,7 @@ func NewMapper(client llm.Client) *Mapper {
 
 // MapFiles takes a map of file paths to their contents (or just empty strings if fast mode)
 // and returns suggested rules.
-func (m *Mapper) MapFiles(ctx context.Context, files map[string]string, fastMode bool) ([]config.Rule, error) {
+func (m *Mapper) MapFiles(ctx context.Context, files map[string]string, fastMode bool) ([]config.Rule, llm.Usage, error) {
 	var promptBuilder strings.Builder
 
 	promptBuilder.WriteString("You are a configuration builder for a tool called 'drift' that checks if code is in sync with documentation.\n")
@@ -55,15 +55,15 @@ func (m *Mapper) MapFiles(ctx context.Context, files map[string]string, fastMode
 		}
 	}
 
-	responseJSON, _, err := m.client.GenerateJSON(ctx, promptBuilder.String(), MappingResponse{})
+	responseJSON, usage, err := m.client.GenerateJSON(ctx, promptBuilder.String(), MappingResponse{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate mappings: %w", err)
+		return nil, usage, fmt.Errorf("failed to generate mappings: %w", err)
 	}
 
 	var response MappingResponse
 	if err := json.Unmarshal([]byte(responseJSON), &response); err != nil {
-		return nil, fmt.Errorf("failed to parse mapping response: %w", err)
+		return nil, usage, fmt.Errorf("failed to parse mapping response: %w", err)
 	}
 
-	return response.Rules, nil
+	return response.Rules, usage, nil
 }
