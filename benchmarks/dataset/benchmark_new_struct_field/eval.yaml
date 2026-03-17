@@ -1,0 +1,9 @@
+name: "benchmark_new_struct_field"
+description: "Added an undocumented exported field HiddenBehavior to the Command struct."
+repository: "https://github.com/driftee-ai/eval-cobra.git"
+commit_sha: "8677e9bf423c99000d23452f7754e20d3a4fcb18"
+expected:
+  has_drift: true
+tags:
+  - "cobra"
+  - "benchmark"

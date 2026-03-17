@@ -1,0 +1,9 @@
+name: "benchmark_default_flag_change"
+description: "Changed the default value assignment of EnableCommandSorting."
+repository: "https://github.com/driftee-ai/eval-cobra.git"
+commit_sha: "2420cfb5a2d561ae446012c35a009d48de07bb1b"
+expected:
+  has_drift: true
+tags:
+  - "cobra"
+  - "benchmark"

@@ -1,0 +1,9 @@
+name: "benchmark_gofmt_change"
+description: "Injected some extra whitespace that would be stripped by AST/gofmt."
+repository: "https://github.com/driftee-ai/eval-cobra.git"
+commit_sha: "d47750ec842f9d0b49e539a8e14ecc7fac9e73b3"
+expected:
+  has_drift: false
+tags:
+  - "cobra"
+  - "benchmark"

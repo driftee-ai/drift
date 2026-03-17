@@ -1,0 +1,9 @@
+name: "benchmark_harmless_refactor"
+description: "Changed an internal variable name in a loop, should not trigger drift."
+repository: "https://github.com/driftee-ai/eval-cobra.git"
+commit_sha: "04e8c2cac5107a4924f04e6c68508dc20e2f365e"
+expected:
+  has_drift: false
+tags:
+  - "cobra"
+  - "benchmark"

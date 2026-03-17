@@ -1,0 +1,9 @@
+name: "benchmark_missing_method_docs"
+description: "Added a new exported method ExecuteSuperContext but it is not documented anywhere."
+repository: "https://github.com/driftee-ai/eval-cobra.git"
+commit_sha: "7baaabf210db75a873dd5ac0683faea3c15e11b6"
+expected:
+  has_drift: true
+tags:
+  - "cobra"
+  - "benchmark"

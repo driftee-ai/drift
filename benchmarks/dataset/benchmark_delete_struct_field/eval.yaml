@@ -1,0 +1,9 @@
+name: "benchmark_delete_struct_field"
+description: "Deleted the SuggestFor field from the Command struct."
+repository: "https://github.com/driftee-ai/eval-cobra.git"
+commit_sha: "77f8f4e1878526b01bf6ac9489a7edcd51d28a7d"
+expected:
+  has_drift: true
+tags:
+  - "cobra"
+  - "benchmark"

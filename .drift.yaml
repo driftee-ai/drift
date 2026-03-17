@@ -1,9 +1,0 @@
-version: 1
-provider: gemini
-rules:
-  - name: "CLI Usage Documentation"
-    code:
-      - "cmd/**.go"
-    docs:
-      - "README.md"
-      - "docs/**/*.mdx"
