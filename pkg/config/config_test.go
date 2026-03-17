@@ -10,29 +10,24 @@ import (
 )
 
 func TestCreateScaffold(t *testing.T) {
-	// Create a temporary directory for the test
 	tmpDir, err := os.MkdirTemp("", "drift_test_config")
 	if err != nil {
 		t.Fatalf("Failed to create temporary directory: %v", err)
 	}
-	defer os.RemoveAll(tmpDir) // Clean up the temporary directory
+	defer os.RemoveAll(tmpDir)
 
-	// Define the path for the scaffold file
 	scaffoldPath := filepath.Join(tmpDir, ".drift.yaml")
 
-	// Call the function to create the scaffold
 	err = config.CreateScaffold(scaffoldPath)
 	if err != nil {
 		t.Fatalf("CreateScaffold failed: %v", err)
 	}
 
-	// Read the content of the created file
 	content, err := os.ReadFile(scaffoldPath)
 	if err != nil {
 		t.Fatalf("Failed to read scaffold file: %v", err)
 	}
 
-	// Define the expected content (without comments for easier comparison)
 	expectedContent := `version: 1
 provider: gemini
 rules:
@@ -42,7 +37,6 @@ rules:
       docs:
         - docs/api/**/*.md
 `
-	// Remove comments and leading/trailing whitespace for comparison
 	actualContent := string(content)
 	actualContent = removeComments(actualContent)
 	actualContent = strings.TrimSpace(actualContent)
@@ -54,17 +48,14 @@ rules:
 }
 
 func TestLoad(t *testing.T) {
-	// Create a temporary directory for the test
 	tmpDir, err := os.MkdirTemp("", "drift_test_load")
 	if err != nil {
 		t.Fatalf("Failed to create temporary directory: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Define the path for the test config file
 	configPath := filepath.Join(tmpDir, ".drift.yaml")
 
-	// Create a test config file
 	testConfig := `
 version: 1
 rules:
@@ -79,13 +70,11 @@ rules:
 		t.Fatalf("Failed to write test config file: %v", err)
 	}
 
-	// Call the Load function
 	loadedConfig, err := config.Load(configPath)
 	if err != nil {
 		t.Fatalf("Load failed: %v", err)
 	}
 
-	// Assert the loaded config
 	if loadedConfig.Version != 1 {
 		t.Errorf("Expected version 1, got %d", loadedConfig.Version)
 	}
@@ -101,6 +90,64 @@ rules:
 	}
 	if len(rule.Docs) != 1 || rule.Docs[0] != "docs/test.md" {
 		t.Errorf("Expected docs 'docs/test.md', got %v", rule.Docs)
+	}
+}
+
+func TestLoad_NonExistentFile(t *testing.T) {
+	_, err := config.Load("nonexistent.yaml")
+	if err == nil {
+		t.Error("Expected an error when loading a non-existent file, got nil")
+	}
+}
+
+func TestLoad_MalformedYAML(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "drift_test_malformed")
+	if err != nil {
+		t.Fatalf("Failed to create temporary directory: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	configPath := filepath.Join(tmpDir, ".drift.yaml")
+	testConfig := `
+version: 1
+rules:
+  - name: Test Rule
+  invalid_yaml: [
+`
+	if err := os.WriteFile(configPath, []byte(testConfig), 0644); err != nil {
+		t.Fatalf("Failed to write test config file: %v", err)
+	}
+
+	_, err = config.Load(configPath)
+	if err == nil {
+		t.Error("Expected an error when loading malformed YAML, got nil")
+	}
+}
+
+func TestLoad_FallbackFiles(t *testing.T) {
+	// Fallbacks are checked if passed path is strictly ".drift.yaml" and it doesn't exist.
+	// Since os.ReadFile reads from CWD when passed a relative path, we need to create
+	// the fallback file in the current working directory of the test temporarily.
+
+	fallbackName := "drift.yml"
+	testConfig := `
+version: 2
+rules:
+  - name: Fallback Rule
+`
+	err := os.WriteFile(fallbackName, []byte(testConfig), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create fallback file: %v", err)
+	}
+	defer os.Remove(fallbackName)
+
+	loadedConfig, err := config.Load(".drift.yaml")
+	if err != nil {
+		t.Fatalf("Failed to load fallback config: %v", err)
+	}
+
+	if loadedConfig.Version != 2 {
+		t.Errorf("Expected version 2 from fallback, got %d", loadedConfig.Version)
 	}
 }
 
