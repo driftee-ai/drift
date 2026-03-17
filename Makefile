@@ -12,7 +12,7 @@ test:
 eval:
 	go test -v -tags=eval -count=1 ./evals/...
 
-benchmark:
+benchmark: build
 	go test -v -tags=eval -count=1 ./benchmarks/...
 
 release: test

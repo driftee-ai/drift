@@ -17,7 +17,8 @@ import (
 type BenchmarkCase struct {
 	Name       string               `yaml:"name"`
 	Repository string               `yaml:"repository"`
-	CommitSHA  string               `yaml:"commit_sha"`
+	BaseSHA    string               `yaml:"base_sha"`
+	HeadSHA    string               `yaml:"head_sha"`
 	Expected   BenchmarkExpectation `yaml:"expected"`
 }
 
@@ -35,10 +36,10 @@ func (s *ScriptCompetitor) Name() string {
 	return s.name
 }
 
-func (s *ScriptCompetitor) Evaluate(repoDir string, diffFile string) (competitors.EvaluationResult, error) {
+func (s *ScriptCompetitor) Evaluate(repoDir string, baseSHA string) (competitors.EvaluationResult, error) {
 	start := time.Now()
 
-	cmd := exec.Command(s.scriptPath, repoDir, diffFile)
+	cmd := exec.Command(s.scriptPath, repoDir, baseSHA)
 	output, err := cmd.CombinedOutput()
 
 	duration := time.Since(start).Milliseconds()
@@ -104,7 +105,9 @@ func TestBenchmarks(t *testing.T) {
 	})
 	if err != nil {
 		t.Logf("No dataset directory found or failed to walk: %v. Creating empty dir.", err)
-		os.MkdirAll(datasetDir, 0755)
+		if err := os.MkdirAll(datasetDir, 0755); err != nil {
+			t.Logf("Failed to create dataset directory: %v", err)
+		}
 		t.Skip("No benchmark datasets available yet.")
 		return
 	}
@@ -145,29 +148,17 @@ func TestBenchmarks(t *testing.T) {
 		}
 
 		t.Run(bc.Name, func(t *testing.T) {
-			t.Logf("Checking out %s at %s", bc.Repository, bc.CommitSHA)
+			t.Logf("Checking out %s at %s", bc.Repository, bc.HeadSHA)
 
-			// 1. Checkout repository & calculate diff
-			repoDir, diffContext, _, err := testutil.CheckoutAndDiff(bc.Repository, bc.CommitSHA, ".benchmark_repos")
+			// 1. Checkout repository at head commit
+			repoDir, err := testutil.CheckoutCommit(bc.Repository, bc.HeadSHA, ".benchmark_repos")
 			if err != nil {
 				t.Fatalf("Failed to checkout repository: %v", err)
 			}
 
-			// Write diff to a temporary file
-			tmpDiffFile, err := os.CreateTemp("", "drift_benchmark_diff_*.patch")
-			if err != nil {
-				t.Fatalf("Failed to create temporary diff file: %v", err)
-			}
-			defer os.Remove(tmpDiffFile.Name())
-
-			if _, err := tmpDiffFile.WriteString(diffContext); err != nil {
-				t.Fatalf("Failed to write to temporary diff file: %v", err)
-			}
-			tmpDiffFile.Close()
-
-			// 3. Evaluate against all competitors
+			// 2. Evaluate against all competitors using BaseSHA
 			for _, comp := range activeCompetitors {
-				result, err := comp.Evaluate(repoDir, tmpDiffFile.Name())
+				result, err := comp.Evaluate(repoDir, bc.BaseSHA)
 				if err != nil {
 					t.Errorf("[%s] Failed to evaluate: %v", comp.Name(), err)
 					continue

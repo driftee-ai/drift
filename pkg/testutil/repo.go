@@ -8,6 +8,53 @@ import (
 	"strings"
 )
 
+// CheckoutCommit clones (or fetches) a repository, checks out a specific commit,
+// and returns the absolute path to the checked-out repository.
+func CheckoutCommit(repoURL, commitSHA, cacheDir string) (repoDir string, err error) {
+	if repoURL == "" || commitSHA == "" {
+		return "", fmt.Errorf("repository URL and commit SHA are required")
+	}
+
+	repoName := filepath.Base(repoURL)
+	repoName = strings.TrimSuffix(repoName, ".git")
+
+	// Ensure cache directory exists
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create cache directory %s: %w", cacheDir, err)
+	}
+
+	evalDir := filepath.Join(cacheDir, repoName)
+
+	// 1. Clone or Fetch the repository
+	if _, err := os.Stat(evalDir); os.IsNotExist(err) {
+		cmd := exec.Command("git", "clone", repoURL, evalDir)
+		if output, err := cmd.CombinedOutput(); err != nil {
+			return "", fmt.Errorf("failed to clone repo %s: %v\nOutput: %s", repoURL, err, output)
+		}
+	} else {
+		cmd := exec.Command("git", "fetch", "origin")
+		cmd.Dir = evalDir
+		if output, err := cmd.CombinedOutput(); err != nil {
+			return "", fmt.Errorf("failed to fetch repo %s: %v\nOutput: %s", repoURL, err, output)
+		}
+	}
+
+	// 2. Checkout the specific commit
+	checkoutCmd := exec.Command("git", "checkout", commitSHA)
+	checkoutCmd.Dir = evalDir
+	if output, err := checkoutCmd.CombinedOutput(); err != nil {
+		return "", fmt.Errorf("failed to checkout %s: %v\nOutput: %s", commitSHA, err, output)
+	}
+
+	// Get absolute path
+	absEvalDir, err := filepath.Abs(evalDir)
+	if err != nil {
+		return "", fmt.Errorf("failed to get absolute path for %s: %w", evalDir, err)
+	}
+
+	return absEvalDir, nil
+}
+
 // CheckoutAndDiff clones (or fetches) a repository, checks out a specific commit,
 // and returns the unified diff and the list of changed files for that commit relative
 // to its parent. Returns the absolute path to the checked-out repository.
@@ -18,7 +65,7 @@ func CheckoutAndDiff(repoURL, commitSHA, cacheDir string) (repoDir string, diffC
 
 	repoName := filepath.Base(repoURL)
 	repoName = strings.TrimSuffix(repoName, ".git")
-	
+
 	// Ensure cache directory exists
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {
 		return "", "", nil, fmt.Errorf("failed to create cache directory %s: %w", cacheDir, err)
@@ -62,7 +109,7 @@ func CheckoutAndDiff(repoURL, commitSHA, cacheDir string) (repoDir string, diffC
 	if err != nil {
 		return "", "", nil, fmt.Errorf("failed to calculate changed files: %w", err)
 	}
-	
+
 	changedFilesRaw := strings.Split(strings.TrimSpace(string(nameOnlyBytes)), "\n")
 	for _, f := range changedFilesRaw {
 		f = strings.TrimSpace(f)

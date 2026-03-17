@@ -28,47 +28,11 @@ jobs:
 
 ### Optimized Usage (Recommended)
 
-Running `drift` on the entire codebase for every small PR is inefficient and can consume unnecessary LLM tokens. **We strongly recommend configuring the action to check only changed files.**
+### Optimized Usage (Recommended)
 
-When you pass the `changed-files` input, `drift` will:
-1.  Filter your rules to find only those affected by the changes.
-2.  Only assess the code/docs that are actually "in play" for this PR.
+Running `drift` on the entire codebase for every small PR is inefficient and can consume unnecessary LLM tokens. **We strongly recommend configuring the action to check only what changed.**
 
-#### Option 1: Using `tj-actions/changed-files` (Easiest)
-
-We recommend using the robust [tj-actions/changed-files](https://github.com/tj-actions/changed-files) action to reliably detect changes.
-
-```yaml
-name: Drift Check
-on: [pull_request]
-
-jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      # 1. Detect changed files
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@v44
-        with:
-          separator: ","
-
-      # 2. Pass them to Drift
-      - name: Run Drift
-        uses: driftee-ai/drift-action@v1
-        with:
-          gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
-          changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
-          diff-only: true # Recommended: Only fail if the PR caused the drift
-```
-
-*(Note: The `drift check` CLI strictly requires diff contents via the `--diff` flag when `--diff-only` is used. However, the `drift-action` intelligently handles this for you by running `git diff` under the hood!)*
-
-#### Option 2: Using Native Git (No Dependencies)
-
-If you prefer not to add external dependencies, you can use native `git` commands to find the difference between the PR branch and the target branch.
+With Drift's native git integration, this is incredibly simple. Just make sure you fetch the history using `actions/checkout` and pass the `base` input.
 
 ```yaml
 name: Drift Check
@@ -81,16 +45,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Required to fetch history for git diff
-
+      
       - name: Run Drift
         uses: driftee-ai/drift-action@v1
-        env:
-          # Compare HEAD against the base branch (usually origin/main)
-          CHANGED_FILES: $(git diff --name-only origin/${{ github.base_ref }}...HEAD | tr '\n' ',')
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
-          changed-files: ${{ env.CHANGED_FILES }}
+          base: ${{ github.base_ref }}
+          diff-only: true # Recommended: Only fail if the PR directly caused the drift
 ```
+
+When you pass the `base` input, `drift` will:
+1.  Automatically run a git diff against the base branch to detect changed files.
+2.  Filter your rules to find only those affected by the changes.
+3.  Only assess the code/docs that are actually "in play" for this PR.
+
+*(Note: If you omit `base`, the underlying `drift check` CLI automatically attempts to detect `main` or `master`!)*
 
 ### Behavior on Drift
 

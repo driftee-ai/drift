@@ -1,7 +1,8 @@
 name: "benchmark_comment_typo_fix"
 description: "Fixed a small typo in a comment, which does not affect the actual API."
 repository: "https://github.com/driftee-ai/eval-cobra.git"
-commit_sha: "537e3f9019ef0faf35893e8fc9890ded7d244bf8"
+head_sha: "537e3f9019ef0faf35893e8fc9890ded7d244bf8"
+base_sha: "537e3f9019ef0faf35893e8fc9890ded7d244bf8^"
 expected:
   has_drift: false
 tags:

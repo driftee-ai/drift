@@ -20,20 +20,13 @@ drift check --config /path/to/custom/drift.yaml
 
 ### Check Changed Files (Action/CI)
 
-For lightning-fast CI/CD pipelines, verify only files that have changed in an active pull request:
+For lightning-fast CI/CD pipelines, verify only files that have changed in an active pull request by providing a base branch to compare against:
 
 ```bash
-# Pass explicitly modified files
-drift check --changed-files "pkg/server/main.go,docs/api/server.md"
+drift check --base origin/main
 ```
 
-Combined with `git` to seamlessly automate pull request checks:
-
-```bash
-# Get PR files and pass them directly to Drift
-CHANGED_FILES=$(git diff --name-only origin/main...HEAD | tr '\n' ',')
-drift check --changed-files "$CHANGED_FILES"
-```
+Drift will natively shell out to Git to detect all changed files and evaluate them. If you omit the `--base` flag, Drift will automatically attempt to detect your default branch (e.g., `main` or `master`).
 
 See our [CI/CD Integration](../ci-cd.mdx) guide for more information and GitHub Actions examples.
 
@@ -45,8 +38,7 @@ To seamlessly integrate into legacy codebases without blocking PRs, use `--diff-
 
 ```bash
 # Forgive legacy documentation debt, but block new drift
-git diff origin/main...HEAD > pr.diff
-drift check --changed-files "$CHANGED_FILES" --diff-only --diff pr.diff
+drift check --base origin/main --diff-only
 ```
 
 ## Example Output
