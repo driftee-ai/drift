@@ -3,32 +3,30 @@ package files
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
 )
 
-// FindFiles takes a list of glob patterns and returns a list of matching file paths.
-func FindFiles(patterns []string) ([]string, error) {
+// FindFiles takes a base directory and a list of glob patterns and returns a list of matching file paths relative to the baseDir.
+func FindFiles(baseDir string, patterns []string) ([]string, error) {
 	var matchingFiles []string
 	seen := make(map[string]bool)
 
 	for _, pattern := range patterns {
 		// doublestar.Glob walks the file system and returns matching files
-		// Use os.DirFS(".") to glob the current directory
-		matches, err := doublestar.Glob(os.DirFS("."), pattern)
+		matches, err := doublestar.Glob(os.DirFS(baseDir), pattern)
 		if err != nil {
 			return nil, err
 		}
 
 		for _, match := range matches {
-			// doublestar.Glob returns paths relative to the root of the FS (os.DirFS(".")).
-			// We need to prepend the current directory to make them absolute or relative to the project root.
-			// For now, let's assume the patterns are relative to the project root.
-			// The match is already relative to the current directory.
+			// We need to return the full absolute or relative path from process CWD, so we join with baseDir
+			fullPath := filepath.Join(baseDir, match)
 
 			// Ensure it's a file and not a directory
-			info, err := os.Stat(match)
+			info, err := os.Stat(fullPath)
 			if err != nil {
 				// If file doesn't exist or other error, skip
 				continue
@@ -38,9 +36,9 @@ func FindFiles(patterns []string) ([]string, error) {
 			}
 
 			// Add to list if not already seen
-			if !seen[match] {
-				matchingFiles = append(matchingFiles, match)
-				seen[match] = true
+			if !seen[fullPath] {
+				matchingFiles = append(matchingFiles, fullPath)
+				seen[fullPath] = true
 			}
 		}
 	}

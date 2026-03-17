@@ -49,6 +49,14 @@ drift init
 
 *(You can use `drift init --fast` to only use file paths for discovery, making it quicker and cheaper if you have a large repository.)*
 
+**Headless Initialization:**
+
+To bypass the interactive wizard and automatically generate a configuration (ideal for CI/CD pipelines or automated benchmarking), use the `-y` or `--non-interactive` flag:
+
+```bash
+drift init -y
+```
+
 **Specify a target directory:**
 
 ```bash

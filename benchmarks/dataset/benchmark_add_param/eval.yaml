@@ -1,0 +1,10 @@
+name: "benchmark_add_param"
+description: "Added a 'force' parameter to the AddCommand signature."
+repository: "https://github.com/driftee-ai/eval-cobra.git"
+head_sha: "d6c58af1a9292a1b2cf59c4178bc989bce32ec4f"
+base_sha: "d6c58af1a9292a1b2cf59c4178bc989bce32ec4f^"
+expected:
+  has_drift: true
+tags:
+  - "cobra"
+  - "benchmark"

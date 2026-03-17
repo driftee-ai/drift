@@ -1,0 +1,10 @@
+name: "benchmark_delete_file"
+description: "Deleted bash_completions.go entirely, which is referenced in docs."
+repository: "https://github.com/driftee-ai/eval-cobra.git"
+head_sha: "c614857436ea30feafe78ff46056a3df493959ff"
+base_sha: "c614857436ea30feafe78ff46056a3df493959ff^"
+expected:
+  has_drift: true
+tags:
+  - "cobra"
+  - "benchmark"

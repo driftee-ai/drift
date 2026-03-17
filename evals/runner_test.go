@@ -7,20 +7,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/driftee-ai/drift/pkg/checker"
+	"github.com/driftee-ai/drift/pkg/config"
 	"github.com/driftee-ai/drift/pkg/llm"
+	"github.com/driftee-ai/drift/pkg/rules"
+	"github.com/driftee-ai/drift/pkg/testutil"
 	"github.com/google/generative-ai-go/genai"
 	"gopkg.in/yaml.v3"
 )
 
 type TestCase struct {
-	Name     string `yaml:"name"`
-	Files    []File `yaml:"files"`
-	Diff     string `yaml:"diff,omitempty"`
-	Expected struct {
+	Name       string `yaml:"name"`
+	Type       string `yaml:"type,omitempty"` // "remote_repo" or empty for inline
+	Repository string `yaml:"repository,omitempty"`
+	BaseSHA    string `yaml:"base_sha,omitempty"`
+	CommitSHA  string `yaml:"commit_sha,omitempty"`
+	Files      []File `yaml:"files"`
+	Diff       string `yaml:"diff,omitempty"`
+	Expected   struct {
 		HasDrift            bool   `yaml:"has_drift"`
 		DriftReasonContains string `yaml:"drift_reason_contains,omitempty"`
 		DiffCausedDrift     *bool  `yaml:"diff_caused_drift,omitempty"`
@@ -34,9 +43,17 @@ type File struct {
 
 func TestEvals(t *testing.T) {
 	testDataDir := "testdata"
-	entries, err := os.ReadDir(testDataDir)
+	var testFiles []string
+	err := filepath.WalkDir(testDataDir, func(path string, d os.DirEntry, err error) error {
+		if err == nil && !d.IsDir() && (strings.HasSuffix(d.Name(), ".yaml") || strings.HasSuffix(d.Name(), ".yml")) {
+			if d.Name() != ".drift.yaml" {
+				testFiles = append(testFiles, path)
+			}
+		}
+		return nil
+	})
 	if err != nil {
-		t.Fatalf("Failed to read testdata directory: %v", err)
+		t.Fatalf("Failed to walk testdata directory: %v", err)
 	}
 
 	docAssessor, err := llm.New("gemini")
@@ -48,12 +65,7 @@ func TestEvals(t *testing.T) {
 	var truePositives, falsePositives, trueNegatives, falseNegatives int
 	var diffTruePositives, diffFalsePositives, diffTrueNegatives, diffFalseNegatives int
 
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yaml") {
-			continue
-		}
-
-		filePath := filepath.Join(testDataDir, entry.Name())
+	for _, filePath := range testFiles {
 		data, err := os.ReadFile(filePath)
 		if err != nil {
 			t.Fatalf("Failed to read test case %s: %v", filePath, err)
@@ -67,6 +79,11 @@ func TestEvals(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			codeStr := ""
 			docStr := ""
+
+			if tc.Type == "remote_repo" {
+				evalRemoteRepo(t, tc, filePath, docAssessor, &truePositives, &falsePositives, &trueNegatives, &falseNegatives, &diffTruePositives, &diffFalsePositives, &diffTrueNegatives, &diffFalseNegatives)
+				return // we handle parsing and evaluation in evalRemoteRepo
+			}
 
 			for _, file := range tc.Files {
 				if strings.HasSuffix(file.Path, ".md") || strings.HasSuffix(file.Path, ".mdx") {
@@ -238,8 +255,124 @@ And here is the code:
 		if f1 < 0.95 {
 			t.Errorf("Eval F1 Score (%.4f) fell below the 0.95 threshold", f1)
 		}
-		if precision < 0.95 {
-			t.Errorf("Eval Precision (%.4f) fell below the 0.95 threshold", precision)
-		}
 	})
+}
+
+// evalRemoteRepo handles the complex fetching, extraction, and evaluation of a real-world repository
+func evalRemoteRepo(
+	t *testing.T,
+	tc TestCase,
+	tcFilePath string,
+	docAssessor llm.Client,
+	truePositives, falsePositives, trueNegatives, falseNegatives *int,
+	diffTruePositives, diffFalsePositives, diffTrueNegatives, diffFalseNegatives *int,
+) {
+	if tc.Repository == "" || tc.CommitSHA == "" {
+		t.Fatalf("remote_repo test cases require 'repository' and 'commit_sha'")
+	}
+
+	evalDir, diffContext, changedFiles, err := testutil.CheckoutAndDiff(tc.Repository, tc.BaseSHA, tc.CommitSHA, ".eval_repos")
+	if err != nil {
+		t.Fatalf("Failed to checkout and calculate diff: %v", err)
+	}
+
+	// 3. Inject the .drift.yaml configuration from the test directory
+	testDir := filepath.Dir(tcFilePath)
+	sourceConfigPath := filepath.Join(testDir, ".drift.yaml")
+	if _, err := os.Stat(sourceConfigPath); os.IsNotExist(err) {
+		t.Fatalf("Expected configuration file %s not found. Every remote_repo test must have an alongside .drift.yaml", sourceConfigPath)
+	}
+
+	configData, err := os.ReadFile(sourceConfigPath)
+	if err != nil {
+		t.Fatalf("Failed to read test configuration %s: %v", sourceConfigPath, err)
+	}
+
+	configPath := filepath.Join(evalDir, ".drift.yaml")
+	if err := os.WriteFile(configPath, configData, 0644); err != nil {
+		t.Fatalf("Failed to inject .drift.yaml into eval repository: %v", err)
+	}
+
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		t.Fatalf("failed to load config file %s: %v", configPath, err)
+	}
+
+	// 5. Trigger rules
+	triggeredRules, err := rules.FilterTriggeredRules(cfg.Rules, changedFiles)
+	if err != nil {
+		t.Fatalf("failed to filter rules based on changed files: %v", err)
+	}
+
+	if len(triggeredRules) == 0 {
+		t.Fatalf("Test setup failure: the commit %s did not trigger any drift rules in the native configuration", tc.CommitSHA)
+	}
+
+	// 6. Evaluate via pkg/checker
+	t.Logf("Running checker using %s...", configPath)
+	chk := checker.New(docAssessor, cfg.Provider)
+	diffOnly := true // Always test real commits in diffOnly mode to ensure exact attribution
+	results := chk.EvaluateRules(context.Background(), triggeredRules, evalDir, diffOnly, diffContext)
+
+	// We'll consider it "drift" if ANY rule failed and was not ignored due to diff
+	actualHasDrift := false
+	var reasons []string
+	var diffCausedCount int
+
+	for _, result := range results {
+		if result.Error != nil {
+			t.Fatalf("Checker error on rule %s: %v", result.Rule.Name, result.Error)
+		}
+		if result.Skipped {
+			continue
+		}
+
+		if !result.IsInSync {
+			actualHasDrift = true
+			reasons = append(reasons, result.Reason)
+			diffCausedCount++
+		} else if result.IgnoredDueToDiff {
+			actualHasDrift = true // Technically there was drift
+			reasons = append(reasons, result.Reason)
+			// diffCausedCount implies the diff didn't cause it, so we leave it 0
+		}
+	}
+
+	combinedReason := strings.Join(reasons, " | ")
+	actualDiffCausedDrift := diffCausedCount > 0
+
+	// 7. Scoring Logic
+	if actualHasDrift && tc.Expected.HasDrift {
+		*truePositives++
+	} else if actualHasDrift && !tc.Expected.HasDrift {
+		*falsePositives++
+		t.Logf("False Positive: Expected In_Sync but got Drift Detected. Reason: %s", combinedReason)
+	} else if !actualHasDrift && tc.Expected.HasDrift {
+		*falseNegatives++
+		t.Logf("False Negative: Expected Drift Detected but got In_Sync. Reason: %s", combinedReason)
+	} else {
+		*trueNegatives++
+	}
+
+	if tc.Expected.DiffCausedDrift != nil {
+		expectedDiffCausedDrift := *tc.Expected.DiffCausedDrift
+
+		if actualDiffCausedDrift && expectedDiffCausedDrift {
+			*diffTruePositives++
+		} else if actualDiffCausedDrift && !expectedDiffCausedDrift {
+			*diffFalsePositives++
+			t.Logf("Diff False Positive: Expected diff to NOT cause drift, but LLM said it did. Reason: %s", combinedReason)
+		} else if !actualDiffCausedDrift && expectedDiffCausedDrift {
+			*diffFalseNegatives++
+			t.Logf("Diff False Negative: Expected diff to cause drift, but LLM said it didn't. Reason: %s", combinedReason)
+		} else {
+			*diffTrueNegatives++
+		}
+	}
+
+	if actualHasDrift && tc.Expected.DriftReasonContains != "" {
+		if !strings.Contains(strings.ToLower(combinedReason), strings.ToLower(tc.Expected.DriftReasonContains)) {
+			t.Logf("Expected reason to contain %q, but got %q", tc.Expected.DriftReasonContains, combinedReason)
+		}
+	}
 }

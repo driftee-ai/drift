@@ -3,9 +3,9 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/driftee-ai/drift/pkg/checker"
@@ -20,29 +20,56 @@ var checkCmd = &cobra.Command{
 	Short: "Checks for drift between your code and your documentation.",
 	Run: func(cmd *cobra.Command, args []string) {
 		configFile, _ := cmd.Flags().GetString("config")
-		changedFiles, _ := cmd.Flags().GetStringSlice("changed-files")
+		base, _ := cmd.Flags().GetString("base")
 		diffOnly, _ := cmd.Flags().GetBool("diff-only")
-		diffFile, _ := cmd.Flags().GetString("diff")
 
+		var changedFiles []string
 		var diffContext string
-		if diffOnly {
-			if diffFile == "" {
-				log.Fatal("When --diff-only is provided, you must also provide the diff file path using --diff, or use --diff - to read from stdin.")
-			}
 
-			if diffFile == "-" {
-				bytes, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					log.Fatalf("Failed to read diff from stdin: %v", err)
+		if base == "" {
+			// Auto-detect default branch
+			branches := []string{"origin/main", "main", "origin/master", "master"}
+			for _, b := range branches {
+				cmdStr := exec.Command("git", "rev-parse", "--verify", b)
+				if err := cmdStr.Run(); err == nil {
+					base = b
+					fmt.Printf("Auto-detected default branch: %s\n", base)
+					break
 				}
-				diffContext = string(bytes)
-			} else {
-				bytes, err := os.ReadFile(diffFile)
-				if err != nil {
-					log.Fatalf("Failed to read diff file %s: %v", diffFile, err)
-				}
-				diffContext = string(bytes)
 			}
+			if base == "" {
+				log.Fatal("Could not auto-detect a default branch (tried origin/main, main, origin/master, master). Please provide one explicitly with --base.")
+			}
+		}
+
+		// Get changed files
+		nameOnlyCmd := exec.Command("git", "diff", "--name-only", fmt.Sprintf("%s...HEAD", base))
+		nameOnlyBytes, err := nameOnlyCmd.Output()
+		if err != nil {
+			if exitErr, ok := err.(*exec.ExitError); ok {
+				log.Fatalf("failed to calculate changed files against base %s. Git output: %s", base, string(exitErr.Stderr))
+			}
+			log.Fatalf("failed to calculate changed files against base %s: %v", base, err)
+		}
+
+		changedFilesRaw := strings.Split(strings.TrimSpace(string(nameOnlyBytes)), "\n")
+		for _, f := range changedFilesRaw {
+			f = strings.TrimSpace(f)
+			if f != "" {
+				changedFiles = append(changedFiles, f)
+			}
+		}
+
+		if diffOnly {
+			diffCmd := exec.Command("git", "diff", fmt.Sprintf("%s...HEAD", base))
+			diffBytes, err := diffCmd.Output()
+			if err != nil {
+				if exitErr, ok := err.(*exec.ExitError); ok {
+					log.Fatalf("failed to calculate diff against base %s. Git output: %s", base, string(exitErr.Stderr))
+				}
+				log.Fatalf("failed to calculate diff against base %s: %v", base, err)
+			}
+			diffContext = string(diffBytes)
 
 			if strings.TrimSpace(diffContext) == "" {
 				log.Println("Warning: --diff-only provided but the diff context is empty.")
@@ -70,11 +97,8 @@ var checkCmd = &cobra.Command{
 		}
 		allInSync := true
 
-		// Define the Response Schema structure
-		// (Removed, moved to pkg/checker)
-
 		chk := checker.New(docAssessor, cfg.Provider)
-		results := chk.EvaluateRules(cmd.Context(), triggeredRules, diffOnly, diffContext)
+		results := chk.EvaluateRules(cmd.Context(), triggeredRules, ".", diffOnly, diffContext)
 
 		for _, result := range results {
 			fmt.Printf("  - Rule: %s\n", result.Rule.Name)
@@ -121,7 +145,6 @@ var checkCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(checkCmd)
 	checkCmd.Flags().StringP("config", "c", ".drift.yaml", "Path to the drift configuration file")
-	checkCmd.Flags().StringSliceP("changed-files", "f", []string{}, "List of changed files to check for drift")
-	checkCmd.Flags().Bool("diff-only", false, "Only fail if the detected drift was caused by the provided git diff")
-	checkCmd.Flags().String("diff", "", "Path to a file containing the git diff, or '-' to read from stdin (required if --diff-only is used)")
+	checkCmd.Flags().String("base", "", "Base branch or commit to compare against for changed files and diffs. If omitted, attempts to auto-detect main or master.")
+	checkCmd.Flags().Bool("diff-only", false, "Only fail if the detected drift was caused by the diff between the base and HEAD")
 }

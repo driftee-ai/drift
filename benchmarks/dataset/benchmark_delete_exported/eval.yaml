@@ -1,0 +1,10 @@
+name: "benchmark_delete_exported"
+description: "Deleted the exported variable EnableCommandSorting which is referenced in docs."
+repository: "https://github.com/driftee-ai/eval-cobra.git"
+head_sha: "e7b950505c84a2b6cc7f583a7ba8ec179c391ca4"
+base_sha: "e7b950505c84a2b6cc7f583a7ba8ec179c391ca4^"
+expected:
+  has_drift: true
+tags:
+  - "cobra"
+  - "benchmark"

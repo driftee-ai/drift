@@ -68,7 +68,12 @@ func (c *AnthropicClient) GenerateJSON(ctx context.Context, prompt string, schem
 		return "", Usage{}, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", "https://api.anthropic.com/v1/messages", bytes.NewBuffer(jsonValue))
+	baseURL := os.Getenv("ANTHROPIC_BASE_URL")
+	if baseURL == "" {
+		baseURL = "https://api.anthropic.com/v1/messages"
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", baseURL, bytes.NewBuffer(jsonValue))
 	if err != nil {
 		return "", Usage{}, err
 	}
