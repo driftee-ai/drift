@@ -58,7 +58,7 @@ func CheckoutCommit(repoURL, commitSHA, cacheDir string) (repoDir string, err er
 // CheckoutAndDiff clones (or fetches) a repository, checks out a specific commit,
 // and returns the unified diff and the list of changed files for that commit relative
 // to its parent. Returns the absolute path to the checked-out repository.
-func CheckoutAndDiff(repoURL, commitSHA, cacheDir string) (repoDir string, diffContext string, changedFiles []string, err error) {
+func CheckoutAndDiff(repoURL, baseSHA, commitSHA, cacheDir string) (repoDir string, diffContext string, changedFiles []string, err error) {
 	if repoURL == "" || commitSHA == "" {
 		return "", "", nil, fmt.Errorf("repository URL and commit SHA are required")
 	}
@@ -95,7 +95,20 @@ func CheckoutAndDiff(repoURL, commitSHA, cacheDir string) (repoDir string, diffC
 	}
 
 	// 3. Calculate the PR Diff and identify changed files
-	diffCmd := exec.Command("git", "diff", "HEAD~1..HEAD")
+	var diffArgs []string
+	var nameOnlyArgs []string
+	
+	if baseSHA != "" {
+		// Three-dot syntax finds the common merge base and diffs from there.
+		diffArgs = []string{"diff", baseSHA + "..." + commitSHA}
+		nameOnlyArgs = []string{"diff", "--name-only", baseSHA + "..." + commitSHA}
+	} else {
+		// Fallback for older test configs or single commit evaluation
+		diffArgs = []string{"diff", "HEAD~1..HEAD"}
+		nameOnlyArgs = []string{"diff", "--name-only", "HEAD~1..HEAD"}
+	}
+
+	diffCmd := exec.Command("git", diffArgs...)
 	diffCmd.Dir = evalDir
 	diffBytes, err := diffCmd.Output()
 	if err != nil {
@@ -103,7 +116,7 @@ func CheckoutAndDiff(repoURL, commitSHA, cacheDir string) (repoDir string, diffC
 	}
 	diffContext = string(diffBytes)
 
-	nameOnlyCmd := exec.Command("git", "diff", "--name-only", "HEAD~1..HEAD")
+	nameOnlyCmd := exec.Command("git", nameOnlyArgs...)
 	nameOnlyCmd.Dir = evalDir
 	nameOnlyBytes, err := nameOnlyCmd.Output()
 	if err != nil {

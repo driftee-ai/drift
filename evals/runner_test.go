@@ -25,6 +25,7 @@ type TestCase struct {
 	Name       string `yaml:"name"`
 	Type       string `yaml:"type,omitempty"` // "remote_repo" or empty for inline
 	Repository string `yaml:"repository,omitempty"`
+	BaseSHA    string `yaml:"base_sha,omitempty"`
 	CommitSHA  string `yaml:"commit_sha,omitempty"`
 	Files      []File `yaml:"files"`
 	Diff       string `yaml:"diff,omitempty"`
@@ -270,7 +271,7 @@ func evalRemoteRepo(
 		t.Fatalf("remote_repo test cases require 'repository' and 'commit_sha'")
 	}
 
-	evalDir, diffContext, changedFiles, err := testutil.CheckoutAndDiff(tc.Repository, tc.CommitSHA, ".eval_repos")
+	evalDir, diffContext, changedFiles, err := testutil.CheckoutAndDiff(tc.Repository, tc.BaseSHA, tc.CommitSHA, ".eval_repos")
 	if err != nil {
 		t.Fatalf("Failed to checkout and calculate diff: %v", err)
 	}
