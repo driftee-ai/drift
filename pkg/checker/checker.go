@@ -53,14 +53,14 @@ func New(client llm.Client, provider string) *Checker {
 
 // EvaluateRules takes a list of triggered rules, reads the associated files,
 // queries the LLM, and returns the results.
-func (c *Checker) EvaluateRules(ctx context.Context, rules []config.Rule, diffOnly bool, diffContext string) []RuleResult {
+func (c *Checker) EvaluateRules(ctx context.Context, rules []config.Rule, baseDir string, diffOnly bool, diffContext string) []RuleResult {
 	var results []RuleResult
 
 	for _, rule := range rules {
 		result := RuleResult{Rule: rule}
 
 		// Find and read code files
-		codeFiles, err := files.FindFiles(rule.Code)
+		codeFiles, err := files.FindFiles(baseDir, rule.Code)
 		if err != nil {
 			result.Error = fmt.Errorf("error finding code files: %w", err)
 			results = append(results, result)
@@ -84,7 +84,7 @@ func (c *Checker) EvaluateRules(ctx context.Context, rules []config.Rule, diffOn
 		result.CodeTotalBytes = totalCodeSize
 
 		// Find and read docs files
-		docFiles, err := files.FindFiles(rule.Docs)
+		docFiles, err := files.FindFiles(baseDir, rule.Docs)
 		if err != nil {
 			result.Error = fmt.Errorf("error finding doc files: %w", err)
 			results = append(results, result)

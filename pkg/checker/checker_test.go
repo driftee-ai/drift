@@ -135,7 +135,7 @@ func TestEvaluateRules(t *testing.T) {
 				t.Run(provider, func(t *testing.T) {
 					checker := New(client, provider)
 
-					results := checker.EvaluateRules(context.Background(), []config.Rule{tt.rule}, tt.diffOnly, tt.diffContext)
+					results := checker.EvaluateRules(context.Background(), []config.Rule{tt.rule}, ".", tt.diffOnly, tt.diffContext)
 					if len(results) != 1 {
 						t.Fatalf("expected 1 result, got %d", len(results))
 					}

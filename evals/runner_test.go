@@ -308,15 +308,10 @@ func evalRemoteRepo(
 	}
 
 	// 6. Evaluate via pkg/checker
-	// We need to set the working directory for the checker to the evalDir natively
-	originalWd, _ := os.Getwd()
-	os.Chdir(evalDir)
-	defer os.Chdir(originalWd)
-
 	t.Logf("Running checker using %s...", configPath)
 	chk := checker.New(docAssessor, cfg.Provider)
 	diffOnly := true // Always test real commits in diffOnly mode to ensure exact attribution
-	results := chk.EvaluateRules(context.Background(), triggeredRules, diffOnly, diffContext)
+	results := chk.EvaluateRules(context.Background(), triggeredRules, evalDir, diffOnly, diffContext)
 
 	// We'll consider it "drift" if ANY rule failed and was not ignored due to diff
 	actualHasDrift := false

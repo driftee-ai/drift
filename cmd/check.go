@@ -98,7 +98,7 @@ var checkCmd = &cobra.Command{
 		allInSync := true
 
 		chk := checker.New(docAssessor, cfg.Provider)
-		results := chk.EvaluateRules(cmd.Context(), triggeredRules, diffOnly, diffContext)
+		results := chk.EvaluateRules(cmd.Context(), triggeredRules, ".", diffOnly, diffContext)
 
 		for _, result := range results {
 			fmt.Printf("  - Rule: %s\n", result.Rule.Name)

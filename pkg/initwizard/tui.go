@@ -452,7 +452,7 @@ func (m *tuiModel) updateViewportContent() {
 	if m.focusIndex == focusInputCode {
 		out.WriteString("🔍 Previewing Code Globs:\n")
 		globs := splitGlobs(m.inputs[1].Value())
-		matches, _ := files.FindFiles(globs)
+		matches, _ := files.FindFiles(".", globs)
 		out.WriteString(fmt.Sprintf("%d files matched.\n\n", len(matches)))
 		for _, match := range matches {
 			out.WriteString("> " + match + "\n")
@@ -460,7 +460,7 @@ func (m *tuiModel) updateViewportContent() {
 	} else if m.focusIndex == focusInputDocs {
 		out.WriteString("🔍 Previewing Doc Globs:\n")
 		globs := splitGlobs(m.inputs[2].Value())
-		matches, _ := files.FindFiles(globs)
+		matches, _ := files.FindFiles(".", globs)
 		out.WriteString(fmt.Sprintf("%d files matched.\n\n", len(matches)))
 		for _, match := range matches {
 			out.WriteString("> " + match + "\n")

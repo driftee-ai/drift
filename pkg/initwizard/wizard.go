@@ -10,13 +10,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func RunWizard(dir string, fastMode bool, nonInteractive bool) error {
+func RunWizard(dir string, fastMode bool, nonInteractive bool, providerArg string) error {
 	var finalRules []config.Rule
 	var provider string
 	var usage llm.Usage
 
 	if nonInteractive {
-		provider = "gemini" // Default to Gemini for speed and quality in non-interactive mode
+		provider = providerArg // Use the provider specified by the argument
 		fmt.Printf("Running in non-interactive mode. Analyzing repository at '%s'...\n", dir)
 
 		files, err := ScanProject(dir, fastMode)
