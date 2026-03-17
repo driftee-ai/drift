@@ -46,80 +46,80 @@ func TestEvaluateRules(t *testing.T) {
 	}
 
 	tests := []struct {
-		name             string
-		rule             config.Rule
-		mockResponse     string
-		mockError        bool
-		diffOnly         bool
-		diffContext      string
-		expectedInSync   bool
-		expectedReason   string
-		expectError      bool
-		expectSkipped    bool
-		expectIgnored    bool
+		name           string
+		rule           config.Rule
+		mockResponse   string
+		mockError      bool
+		diffOnly       bool
+		diffContext    string
+		expectedInSync bool
+		expectedReason string
+		expectError    bool
+		expectSkipped  bool
+		expectIgnored  bool
 	}{
 		{
-			name: "In Sync",
-			rule: rule,
-			mockResponse: "```json\n{\n  \"is_in_sync\": true,\n  \"reason\": \"Matches perfectly\"\n}\n```",
-			expectedInSync:   true,
-			expectedReason:   "Matches perfectly",
+			name:           "In Sync",
+			rule:           rule,
+			mockResponse:   "```json\n{\n  \"is_in_sync\": true,\n  \"reason\": \"Matches perfectly\"\n}\n```",
+			expectedInSync: true,
+			expectedReason: "Matches perfectly",
 		},
 		{
-			name: "Out of Sync",
-			rule: rule,
-			mockResponse: "```json\n{\n  \"is_in_sync\": false,\n  \"reason\": \"Missing parameter\"\n}\n```",
-			expectedInSync:   false,
-			expectedReason:   "Missing parameter",
+			name:           "Out of Sync",
+			rule:           rule,
+			mockResponse:   "```json\n{\n  \"is_in_sync\": false,\n  \"reason\": \"Missing parameter\"\n}\n```",
+			expectedInSync: false,
+			expectedReason: "Missing parameter",
 		},
 		{
-			name: "Malformed JSON",
-			rule: rule,
-			mockResponse: "Not a json response",
-			expectedInSync:   false,
-			expectError:      true,
+			name:           "Malformed JSON",
+			rule:           rule,
+			mockResponse:   "Not a json response",
+			expectedInSync: false,
+			expectError:    true,
 		},
 		{
-			name: "LLM Error",
-			rule: rule,
-			mockError:        true,
-			expectedInSync:   false,
-			expectError:      true,
+			name:           "LLM Error",
+			rule:           rule,
+			mockError:      true,
+			expectedInSync: false,
+			expectError:    true,
 		},
 		{
-			name: "Diff Ignored",
-			rule: rule,
-			diffOnly:         true,
-			diffContext:      "--- a/file +++ b/file",
-			mockResponse: "```json\n{\n  \"is_in_sync\": false,\n  \"reason\": \"Legacy drift\",\n  \"is_drift_caused_by_diff\": false\n}\n```",
-			expectedInSync:   true,
-			expectIgnored:    true,
+			name:           "Diff Ignored",
+			rule:           rule,
+			diffOnly:       true,
+			diffContext:    "--- a/file +++ b/file",
+			mockResponse:   "```json\n{\n  \"is_in_sync\": false,\n  \"reason\": \"Legacy drift\",\n  \"is_drift_caused_by_diff\": false\n}\n```",
+			expectedInSync: true,
+			expectIgnored:  true,
 		},
 		{
-			name: "Diff Causes Drift",
-			rule: rule,
-			diffOnly:         true,
-			diffContext:      "--- a/file +++ b/file",
-			mockResponse: "```json\n{\n  \"is_in_sync\": false,\n  \"reason\": \"Diff broke it\",\n  \"is_drift_caused_by_diff\": true\n}\n```",
-			expectedInSync:   false,
-			expectIgnored:    false,
+			name:           "Diff Causes Drift",
+			rule:           rule,
+			diffOnly:       true,
+			diffContext:    "--- a/file +++ b/file",
+			mockResponse:   "```json\n{\n  \"is_in_sync\": false,\n  \"reason\": \"Diff broke it\",\n  \"is_drift_caused_by_diff\": true\n}\n```",
+			expectedInSync: false,
+			expectIgnored:  false,
 		},
 		{
-			name: "Missing Both - Skipped",
-			rule: missingBothRule,
-			expectSkipped:    true,
+			name:          "Missing Both - Skipped",
+			rule:          missingBothRule,
+			expectSkipped: true,
 		},
 		{
-			name: "Missing Code Only - Error",
-			rule: missingCodeRule,
-			expectedInSync:   false,
-			expectError:      true, // ErrMissingFiles
+			name:           "Missing Code Only - Error",
+			rule:           missingCodeRule,
+			expectedInSync: false,
+			expectError:    true, // ErrMissingFiles
 		},
 		{
-			name: "Missing Docs Only - Error",
-			rule: missingDocsRule,
-			expectedInSync:   false,
-			expectError:      true, // ErrMissingFiles
+			name:           "Missing Docs Only - Error",
+			rule:           missingDocsRule,
+			expectedInSync: false,
+			expectError:    true, // ErrMissingFiles
 		},
 	}
 
@@ -129,7 +129,7 @@ func TestEvaluateRules(t *testing.T) {
 				Response:    tt.mockResponse,
 				ShouldError: tt.mockError,
 			}
-			
+
 			// Test with both providers to ensure schema generation doesn't crash
 			for _, provider := range []string{"openai", "gemini"} {
 				t.Run(provider, func(t *testing.T) {

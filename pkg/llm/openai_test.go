@@ -36,7 +36,7 @@ func TestOpenAIClient_GenerateJSON(t *testing.T) {
 			t.Error("expected request body")
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"id": "chatcmpl-123",
 			"object": "chat.completion",
 			"created": 1677652288,
@@ -61,14 +61,14 @@ func TestOpenAIClient_GenerateJSON(t *testing.T) {
 	config := openai.DefaultConfig("test-key")
 	config.BaseURL = server.URL + "/v1"
 	client := openai.NewClientWithConfig(config)
-	
+
 	llmClient := &OpenAIClient{client: client}
 
 	res, usage, err := llmClient.GenerateJSON(context.Background(), "test prompt", nil)
 	if err != nil {
 		t.Fatalf("GenerateJSON failed: %v", err)
 	}
-	
+
 	if usage.TotalTokens != 15 {
 		t.Errorf("expected 15 total tokens, got %d", usage.TotalTokens)
 	}

@@ -34,13 +34,13 @@ func TestAnthropicClient_GenerateJSON(t *testing.T) {
 		if string(b) == "" {
 			t.Error("expected request body")
 		}
-		
+
 		if r.Header.Get("x-api-key") != "test-key" {
 			t.Errorf("missing or incorrect api key header")
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"content": [
 				{
 					"text": "{\"is_in_sync\": true}"

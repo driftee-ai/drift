@@ -50,7 +50,7 @@ func TestGeminiClient_GenerateJSON(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		// Mock response structure matching Gemini REST API
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"candidates": [
 				{
 					"content": {

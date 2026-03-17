@@ -256,6 +256,7 @@ And here is the code:
 		}
 	})
 }
+
 // evalRemoteRepo handles the complex fetching, extraction, and evaluation of a real-world repository
 func evalRemoteRepo(
 	t *testing.T,
@@ -329,7 +330,7 @@ func evalRemoteRepo(
 		if result.Skipped {
 			continue
 		}
-		
+
 		if !result.IsInSync {
 			actualHasDrift = true
 			reasons = append(reasons, result.Reason)
